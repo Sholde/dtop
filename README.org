@@ -1,0 +1,7 @@
+#+TITLE: Distributed Top Project
+#+AUTHOR: Sholde m4ssi
+#+DATE: 2021
+
+* Distributed Top Project
+
+  It is a top project to monitoring distibuted computer.
