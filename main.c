@@ -3,98 +3,79 @@
 #include <stdlib.h> // malloc
 #include <proc/readproc.h>
 
+// Structure
 typedef struct proc_info_s
 {
-  proc_t info;
-  struct proc_info_s *next;
+  size_t n;
+  proc_t **info;
 } proc_info_t;
 
+// Main function for sensor
 proc_info_t *sensor(void)
 {
-  proc_info_t *p = NULL;
-  
   // Define which information we want
   PROCTAB *tab = openproc(PROC_FILLMEM | PROC_FILLSTAT | PROC_FILLSTATUS);
-
-  // Buffer for proc information
-  proc_t proc_info;
-
-  // Clean the buffer
-  memset(&proc_info, 0, sizeof(proc_info));
 
   // Counter of running process
   int count = 0;
 
-  if (readproc(tab, &proc_info) != NULL)
-    {
-      p = malloc(sizeof(proc_info_t));
-      p->info = proc_info;
-      p->next = NULL;
-      proc_info_t *tmp = p;
-      
-      while (readproc(tab, &proc_info) != NULL)
-        {
-          // Create node
-          tmp->next = malloc(sizeof(proc_info_t));
-          tmp = tmp->next;
-
-          // Fill node
-          tmp->info = proc_info;
-          tmp->next = NULL;
-
-          // Inc counter
-          count++;
-        }
-    }
+  // Read all process
+  proc_t **info = readproctab(PROC_FILLMEM | PROC_FILLSTAT | PROC_FILLSTATUS);
 
   // Close
   closeproc(tab);
 
+  // Init structure
+  proc_info_t *p = malloc(sizeof(proc_info_t));
+  p->info = info;
+  while (p->info[count] != NULL)
+    {
+      count++;
+    }
+  p->n = count;
+
+  // Return the structure p
   return p;
 }
 
+// Main function for display
 void free_info(proc_info_t *p)
 {
-  proc_info_t *tmp = p;
-  
-  while (tmp != NULL)
+  // Free all proc_t *
+  for (int i = 0; p->info[i] != NULL && i < p->n; i++)
     {
-      p = tmp;
-      tmp = tmp->next;
-      free(p);
+      freeproc(p->info[i]);
     }
+
+  // Free struct
+  free(p);
 }
 
 void display(proc_info_t *p)
 {
+  // Test if pointer is not NULL
   if (!p)
     exit(1);
 
-  // Counter of running process
-  int count = 0;
-
   // Print info
+  printf("Process: %ld\n", p->n);
   printf("%20s: \t%5s\t%5s\t%5s\n", "COMMAND", "PPID", "TID", "RSS");
 
-  proc_info_t *tmp = p;
-  
-  while (tmp != NULL)
+  for (int i = 0; p->info[i] != NULL && i < p->n; i++)
     {
-      printf("%20s: \t%5d\t%5d\t%5ld\n", tmp->info.cmd, tmp->info.ppid,
-             tmp->info.tid, tmp->info.rss);
-      count++;
-      tmp = tmp->next;
+      printf("%20s: \t%5d\t%5d\t%5ld\n", p->info[i]->cmd, p->info[i]->ppid,
+             p->info[i]->tid, p->info[i]->rss);
     }
-
-  printf("Process: %d\n", count);
-  
 }
 
+// Main
 int main(int argc, char **argv)
 {
+  //
   proc_info_t *p = sensor();
   display(p);
   free_info(p);
-  
+
+  //
   return 0;
 }
