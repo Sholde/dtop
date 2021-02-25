@@ -3,6 +3,9 @@
 #include <stdlib.h> // malloc
 #include <proc/readproc.h>
 
+#define PROC_FLAGS (PROC_FILLMEM | PROC_FILLCOM | PROC_FILLENV | PROC_FILLUSR | \
+                    PROC_FILLGRP | PROC_FILLSTAT | PROC_FILLSTATUS)
+
 // Structure
 typedef struct proc_info_s
 {
@@ -14,13 +17,13 @@ typedef struct proc_info_s
 proc_info_t *sensor(void)
 {
   // Define which information we want
-  PROCTAB *tab = openproc(PROC_FILLMEM | PROC_FILLSTAT | PROC_FILLSTATUS);
+  PROCTAB *tab = openproc(PROC_FLAGS);
 
   // Counter of running process
   int count = 0;
 
   // Read all process
-  proc_t **info = readproctab(PROC_FILLMEM | PROC_FILLSTAT | PROC_FILLSTATUS);
+  proc_t **info = readproctab(PROC_FLAGS);
 
   // Close
   closeproc(tab);
