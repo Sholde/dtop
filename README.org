@@ -2,6 +2,30 @@
 #+AUTHOR: Sholde m4ssi
 #+DATE: 2021
 
-* Distributed Top Project
+* Installation
 
-  It is a top project to monitoring distibuted computer.
+#+BEGIN_SRC bash
+$ git clone https://github.com/aisetop/dtop.git
+#+END_SRC
+
+** Dependencies
+
+  - gcc (glibc)
+  - make (Makefile)
+  - procps (readproc)
+
+*** Example of installation on Archlinux
+
+#+BEGIN_SRC bash
+$ sudo pacman -Syu gcc make procps
+#+END_SRC
+
+* Compilation
+
+#+BEGIN_SRC bash
+$ make
+#+END_SRC
+
+* Usage 
+
+  TO DO.
