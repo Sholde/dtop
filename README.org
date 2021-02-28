@@ -50,4 +50,4 @@ Usage: ./dtop [OPTION] filename
 
 * License
 
-  TO DO.
+  GNU General Public License v3.0 ([[https://github.com/aisetop/dtop/blob/master/LICENSE][see License]])
