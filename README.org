@@ -28,4 +28,26 @@ $ make
 
 * Usage 
 
+In project directory:
+#+BEGIN_SRC bash
+$ ./dtop
+#+END_SRC
+
+** Help
+
+To print help:
+#+BEGIN_SRC bash
+$ ./dtop -h
+#+END_SRC
+
+It will show:
+#+BEGIN_SRC txt
+Usage: ./dtop [OPTION] filename
+    , normal case
+  -h, print this help
+  -o, redirect the actual state of all cpu in the given file
+#+END_SRC
+
+* License
+
   TO DO.

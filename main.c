@@ -15,7 +15,7 @@ void print_help(int argc, char **argv)
 {
   printf(BOLD "Usage: " RESET "%s [OPTION] filename\n", argv[0]);
 
-  printf(BOLD "    " RESET ", normal \n");
+  printf(BOLD "    " RESET ", normal case\n");
   printf(BOLD "  -h" RESET ", print this help\n");
   printf(BOLD "  -o" RESET ", redirect the actual state of all cpu in the given file\n");
 }
