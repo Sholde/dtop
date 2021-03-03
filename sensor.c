@@ -1,8 +1,53 @@
+#include <stdio.h>
 #include <string.h> // memset
 #include <stdlib.h> // malloc
 #include <proc/readproc.h>
 
 #include "sensor.h"
+
+// Get uptime (time since boot)
+double get_uptime(void)
+{
+  FILE *f = fopen("/proc/uptime", "r");
+  if (!f)
+    exit(1);
+
+  char buff[64];
+
+  char *ret = fgets(buff, 64, f);
+  if (!ret)
+    {
+      fclose(f);
+      exit(1);
+    }
+
+  fclose(f);
+
+  return atoll(buff);
+}
+
+// Get pourcentage of utilisation of given process
+unsigned get_cpu_usage(proc_t *info)
+{
+  double total_time = info->utime + info->stime;
+
+  // if we want to add cumulate time of children
+  total_time += info->cutime + info->cstime;
+
+  // Get cpu clock
+  double hertz = sysconf(_SC_CLK_TCK);
+
+  double uptime = get_uptime();
+
+  double elapsed = uptime / (info->start_time / hertz);
+
+  double cpu_usage = 100 * ((total_time / hertz) / elapsed);
+
+  if (cpu_usage <= 0)
+    cpu_usage = 0;
+
+  return (unsigned) cpu_usage;
+}
 
 // Main function for sensor
 proc_info_t *sensor(void)
@@ -24,6 +69,7 @@ proc_info_t *sensor(void)
   p->info = info;
   while (p->info[count] != NULL)
     {
+      p->info[count]->pcpu = get_cpu_usage(p->info[count]);
       count++;
     }
   p->n = count;
