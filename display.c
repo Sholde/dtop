@@ -11,7 +11,7 @@ void display(proc_info_t *p)
   // Print info
   printf("Process: %ld\n", p->n);
   printf("%5s %10s %10s %5s %5s %5s %10s %10s %8s %s\n", "TID", "USER", "GROUP",
-         "PPID", "CPU", "\%CPU", "RES", "VM", "TIME", "COMMAND");
+         "PPID", "CPU", "CPU\%", "RES", "VIRT", "TIME", "COMMAND");
 
   for (int i = 0; p->info[i] != NULL && i < p->n; i++)
     {
