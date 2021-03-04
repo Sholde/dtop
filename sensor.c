@@ -6,7 +6,7 @@
 #include "sensor.h"
 
 // Get uptime (time since boot)
-double get_uptime(void)
+static double get_uptime(void)
 {
   FILE *f = fopen("/proc/uptime", "r");
   if (!f)
@@ -27,7 +27,7 @@ double get_uptime(void)
 }
 
 // Get pourcentage of utilisation of given process
-unsigned get_cpu_usage(proc_t *info)
+static unsigned get_cpu_usage(proc_t *info)
 {
   double total_time = info->utime + info->stime;
 
