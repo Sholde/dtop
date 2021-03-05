@@ -28,7 +28,7 @@ static void handle_interactif()
   fprintf(stderr, "Not yet implemented!\n");
 }
 
-void client(int ipv, enum mode_client mode)
+void client(int ipv, enum mode_client mode, char *ip, char *port)
 {
   //
   if (mode != INTERACTIF && mode != STANDARD)
@@ -59,7 +59,7 @@ void client(int ipv, enum mode_client mode)
   hints.ai_flags    = AI_PASSIVE;
   
   // Call getaddinfo to get address info
-  int ret = getaddrinfo(NULL, SERVER_PORT, &hints, &addr_info);
+  int ret = getaddrinfo(ip, port, &hints, &addr_info);
 
   if (ret < 0)
     {
@@ -97,7 +97,7 @@ void client(int ipv, enum mode_client mode)
   // Check if we are connected
   if (!connected)
     {
-      fprintf(stderr, "Failed to connect on 0.0.0.0:%s\n", SERVER_PORT);
+      fprintf(stderr, "Failed to connect on %s:%s\n", ip, port);
       exit(EXIT_FAILURE);
     }
 

@@ -39,14 +39,14 @@ static unsigned get_cpu_usage(proc_t *info)
 
   double uptime = get_uptime();
 
-  double elapsed = uptime / (info->start_time / hertz);
+  double elapsed = uptime - (info->start_time / hertz);
 
   double cpu_usage = 100 * ((total_time / hertz) / elapsed);
 
   if (cpu_usage <= 0)
     cpu_usage = 0;
 
-  return (unsigned) cpu_usage;
+  return (unsigned) cpu_usage * 100;
 }
 
 // Main function for sensor
