@@ -27,9 +27,11 @@ void *client_loop(void *arg)
 
   struct sockaddr_in *addr = (struct sockaddr_in *)client->info;
 
-  printf("New connection from %s\n", inet_ntoa((struct in_addr) addr->sin_addr));
+  printf("New connection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 
   close(client->client_socket);
+
+  printf("Deconnection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 
   free(client);
 
