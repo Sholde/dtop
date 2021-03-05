@@ -15,8 +15,8 @@ void display(proc_info_t *p)
 
   for (int i = 0; p->info[i] != NULL && i < p->n; i++)
     {
-      printf("%5d %10s %10s %5d %5d %5d %10ld %10ld %8lld %s\n", p->info[i]->tid, p->info[i]->ruser,
-             p->info[i]->rgroup, p->info[i]->ppid, p->info[i]->processor, p->info[i]->pcpu,
+      printf("%5d %10s %10s %5d %5d %5.2lf %10ld %10ld %8lld %s\n", p->info[i]->tid, p->info[i]->ruser,
+             p->info[i]->rgroup, p->info[i]->ppid, p->info[i]->processor, (double)p->info[i]->pcpu / 100,
              p->info[i]->rss, p->info[i]->size, p->info[i]->utime, p->info[i]->cmd);
     }
 }
