@@ -7,6 +7,6 @@ enum mode_client
     INTERACTIF
   };
 
-void client(int ipv, enum mode_client);
+void client(int, enum mode_client, char *, char *);
 
 #endif

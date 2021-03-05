@@ -9,20 +9,26 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+// inet_ntoa
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "server.h"
 
 typedef struct client_info_s
 {
   int client_socket;
+  struct sockaddr *info;
 } client_info_t;
 
 void *client_loop(void *arg)
 {
   client_info_t *client = (client_info_t *)arg;
 
-  printf("New connection\n");
+  struct sockaddr_in *addr = (struct sockaddr_in *)client->info;
 
-  write(client->client_socket, "Hello from server!\n", 20);
+  printf("New connection from %s\n", inet_ntoa((struct in_addr) addr->sin_addr));
+
   close(client->client_socket);
 
   free(client);
@@ -30,7 +36,7 @@ void *client_loop(void *arg)
   return NULL;
 }
 
-void server(int ipv)
+void server(int ipv, char *port)
 {
   // Check argument
   if (ipv != 4 && ipv != 6 && ipv != 10)
@@ -62,7 +68,7 @@ void server(int ipv)
   hints.ai_flags    = AI_PASSIVE;
   
   // Call getaddinfo to get address info
-  int ret = getaddrinfo(NULL, SERVER_PORT, &hints, &addr_info);
+  int ret = getaddrinfo(NULL, port, &hints, &addr_info);
 
   if (ret < 0)
     {
@@ -70,7 +76,7 @@ void server(int ipv)
       exit(EXIT_FAILURE);
     }
 
-  // Varaible to connect to soket and listen
+  // Variable to connect to soket and listen
   struct addrinfo *tmp_ai  = NULL;
   int listen_sock = -1;
   int binded = 0;
@@ -100,7 +106,7 @@ void server(int ipv)
   // Check if we are bind
   if (!binded)
     {
-      fprintf(stderr, "Failed to bind on 0.0.0.0:%s\n", SERVER_PORT);
+      fprintf(stderr, "Failed to bind on 0.0.0.0:%s\n", port);
       exit(EXIT_FAILURE);
     }
 
@@ -137,6 +143,7 @@ void server(int ipv)
         }
       
       client->client_socket = client_socket;
+      client->info = &client_info;
 
       pthread_t th;
       

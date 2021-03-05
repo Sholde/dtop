@@ -3,6 +3,7 @@
 #include <stdlib.h>   // exit
 #include <sys/stat.h> // open
 #include <fcntl.h>    // open
+#include <string.h>   // string
 
 #include "server.h"
 #include "client.h"
@@ -18,10 +19,12 @@ void print_help(int argc, char **argv)
   printf(BOLD "  -c" RESET ", use such client\n");
   printf(BOLD "  -s" RESET ", use such server\n");
   printf(BOLD "  -o" RESET ", redirect the actual state of all cpu in the given file\n");
-  printf(BOLD "  -p" RESET ", print on stdout\n");
+  printf(BOLD "  -i" RESET ", select the ip address of server\n");
+  printf(BOLD "  -p" RESET ", select a port\n");
   printf(BOLD "  -4" RESET ", use only ipv4\n");
   printf(BOLD "  -6" RESET ", use only ipv6\n");
   printf(BOLD "  -0" RESET ", use ipv4 and ipv6\n");
+  printf(BOLD "  -n" RESET ", select ncurses output\n");
 }
 
 void handle_client(int argc, char **argv)
@@ -30,8 +33,11 @@ void handle_client(int argc, char **argv)
   int fd = -1;
   int opt = 0;
   int ipv = 0;
+  char *ip = NULL;
+  char *port = NULL;
+  int mode = 0;
   
-  while ((opt = getopt(argc, argv, "046ipo:")) != -1)
+  while ((opt = getopt(argc, argv, "046ni:p:o:")) != -1)
     {
       switch (opt)
         {
@@ -45,20 +51,38 @@ void handle_client(int argc, char **argv)
           fd = open(optarg, O_CREAT | O_WRONLY, 0666);
           dup2(fd, STDOUT_FILENO);
 
-        case 'p': /* print */
-          client(ipv, STANDARD);
+        case 'i': /* ip */
+          ip = optarg;
+          break;
+          
+        case 'p': /* port */
+          port = optarg;
+          break;
+          
+        case 'n': /* intercatif */
+          mode = 1;
           break;
 
-        case 'i': /* intercatif */
-          client(ipv, INTERACTIF);
-          break;
-
-        default: /* '?' */
+        case '?': /* '?' */
           fprintf(stderr, "Usage: %s [OPTION] filename\n", argv[0]);
           exit(EXIT_FAILURE);
           break;
+
+        default: /* print */
+          mode = 0;
+          break;
         }
     }
+
+  if (mode)
+    {
+      client(ipv, INTERACTIF, ip, port);
+    }
+  else
+    {
+      client(ipv, STANDARD, ip, port);
+    }
+
 
   // Close file descriptor
   if (fd != -1)
@@ -70,8 +94,9 @@ void handle_server(int argc, char **argv)
   // Declare variable
   int opt = 0;
   int ipv = 0;
+  char *port = NULL;
   
-  while ((opt = getopt(argc, argv, "046")) != -1)
+  while ((opt = getopt(argc, argv, "046p:")) != -1)
     {
       switch (opt)
         {
@@ -79,7 +104,9 @@ void handle_server(int argc, char **argv)
         case '4': /* ipv4 */
         case '6': /* ipv6 */
           ipv = opt - '0';
-          server(ipv);
+          break;
+        case 'p': /* port */
+          port = optarg;
           break;
                 
         default: /* '?' */
@@ -88,6 +115,8 @@ void handle_server(int argc, char **argv)
           break;
         }
     }
+
+  server(ipv, port);
 }
 
 // Main
@@ -95,7 +124,7 @@ int main(int argc, char **argv)
 {
   // Check argument with getopt
   int opt = 0;
-
+  
   while ((opt = getopt(argc, argv, "hsc")) != -1)
     {
     switch (opt)
@@ -112,7 +141,7 @@ int main(int argc, char **argv)
       case 's': /* server */
         handle_server(argc, argv);
         break;
-        
+
       default: /* '?' */
         fprintf(stderr, "Error: bad argument, needed [-h|-s|-c]\n");
         exit(EXIT_FAILURE);
