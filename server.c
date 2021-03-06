@@ -35,10 +35,23 @@ void *client_loop(void *arg)
   // Decrement user
   serv->nb_users--;
 
-  // Clean
-  free(serv->client);
+  // Disable
+  serv->client->active = 0;
 
   return NULL;
+}
+
+int search_place(server_t *serv)
+{
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      if (!serv->client[i].active)
+        {
+          return i;
+        }
+    }
+  
+  return -1;
 }
 
 void server(int ipv, char *port, int max_users)
@@ -133,11 +146,18 @@ void server(int ipv, char *port, int max_users)
   // Server
   struct sockaddr client_info;
   socklen_t addrlen;
-  memset(&client_info, 0, sizeof(client_info));
 
-  server_t *serv = malloc(sizeof(server_t) * 1);
+  server_t *serv = malloc(sizeof(server_t));
 
   if (!serv)
+    {
+      fprintf(stderr, "Error: canno't allocate memory\n");
+      exit(EXIT_FAILURE);
+    }
+  
+  serv->client = malloc(sizeof(client_info_t));
+  
+  if (!serv->client)
     {
       fprintf(stderr, "Error: canno't allocate memory\n");
       exit(EXIT_FAILURE);
@@ -163,17 +183,21 @@ void server(int ipv, char *port, int max_users)
         }
       else // If we have place for new user
         {
-          // Fill structure
-          serv->client = malloc(sizeof(client_info_t));
+          // Search place
+          int index = search_place(serv);
 
-          if (!serv->client)
+          if (index == -1)
             {
-              fprintf(stderr, "Error: canno't allocate memory\n");
+              fprintf(stderr, "Error: canno't find place\n");
               exit(EXIT_FAILURE);
             }
-      
-          serv->client->client_socket = client_socket;
-          serv->client->info = &client_info;
+
+          // Fill structure
+          serv->max_users = max_users;
+          serv->client[index].id = index;
+          serv->client[index].active = 1;
+          serv->client[index].client_socket = client_socket;
+          serv->client[index].info = &client_info;
 
           // Throw thread
           pthread_t th;
@@ -186,5 +210,6 @@ void server(int ipv, char *port, int max_users)
   close(listen_sock);
 
   // Clean
+  free(serv->client);
   free(serv);
 }

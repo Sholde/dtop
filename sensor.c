@@ -72,7 +72,7 @@ machine_info_t *sensor(void)
       m->proc_info[count]->pcpu = get_cpu_usage(m->proc_info[count]);
       count++;
     }
-  m->n = count;
+  m->nprocess = count;
 
   // Return the structure m
   return m;
@@ -82,7 +82,7 @@ machine_info_t *sensor(void)
 void free_info(machine_info_t *m)
 {
   // Free all proc_t *
-  for (int i = 0; m->proc_info[i] != NULL && i < m->n; i++)
+  for (int i = 0; m->proc_info[i] != NULL && i < m->nprocess; i++)
     {
       freeproc(m->proc_info[i]);
     }

@@ -42,10 +42,27 @@ $ ./dtop -h
 
 It will show:
 #+BEGIN_SRC txt
-Usage: ./dtop [OPTION] filename
-    , normal case
+Usage: ./dtop [OPTION] [ARGUMENT]...
+Options:
   -h, print this help
-  -o, redirect the actual state of all cpu in the given file
+
+  SERVER:
+    -s            use such server
+    -p <port>     select a port
+    -u <number>   select the numbe of max users in server
+    -4            use only ipv4
+    -6            use only ipv6
+    -0            use ipv4 and ipv6
+
+  CLIENT:
+    -c            use such client
+    -o <filename> redirect output in the given file
+    -n            select interactif output (with ncurse)
+    -i <ip>       select the ip address of server
+    -p <port>     select the port of server
+    -4            use only ipv4
+    -6            use only ipv6
+    -0            use ipv4 and ipv6
 #+END_SRC
 
 * License

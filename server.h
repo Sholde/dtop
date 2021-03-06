@@ -14,6 +14,7 @@ typedef struct client_info_s
 
 typedef struct server_s
 {
+  int max_users;
   int nb_users;
   client_info_t *client;
 } server_t;

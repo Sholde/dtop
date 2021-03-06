@@ -32,11 +32,11 @@ void display(machine_info_t *m)
   char *str_time = NULL;
   
   // Print info
-  printf("Process: %ld\n", m->n);
+  printf("Process: %ld\n", m->nprocess);
   printf("%5s %10s %10s %5s %5s %5s %10s %10s %8s %s\n", "TID", "USER", "GROUP",
          "PPID", "CPU", "CPU\%", "RES", "VIRT", "TIME", "COMMAND");
 
-  for (int i = 0; m->proc_info[i] != NULL && i < m->n; i++)
+  for (int i = 0; m->proc_info[i] != NULL && i < m->nprocess; i++)
     {
       // Transform time
       str_time = get_time(m->proc_info[i]->utime);

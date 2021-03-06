@@ -11,7 +11,7 @@
 typedef struct machine_info_s
 {
   // Proc
-  size_t n;
+  size_t nprocess;
   size_t nproc;
   proc_t **proc_info;
 
