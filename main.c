@@ -25,6 +25,7 @@ void print_help(int argc, char **argv)
   printf(BOLD "  -6" RESET ", use only ipv6\n");
   printf(BOLD "  -0" RESET ", use ipv4 and ipv6\n");
   printf(BOLD "  -n" RESET ", select ncurses output\n");
+  printf(BOLD "  -u" RESET ", select the numbe of max users in server\n");
 }
 
 void handle_client(int argc, char **argv)
@@ -95,8 +96,9 @@ void handle_server(int argc, char **argv)
   int opt = 0;
   int ipv = 0;
   char *port = NULL;
+  int max_users = -1;
   
-  while ((opt = getopt(argc, argv, "046p:")) != -1)
+  while ((opt = getopt(argc, argv, "046p:u:")) != -1)
     {
       switch (opt)
         {
@@ -105,10 +107,15 @@ void handle_server(int argc, char **argv)
         case '6': /* ipv6 */
           ipv = opt - '0';
           break;
+
         case 'p': /* port */
           port = optarg;
           break;
-                
+
+        case 'u': /* users */
+          max_users = atoi(optarg);
+          break;
+
         default: /* '?' */
           fprintf(stderr, "Error: bad argument, needed [-0|-4|-6]\n");
           exit(EXIT_FAILURE);
@@ -116,7 +123,7 @@ void handle_server(int argc, char **argv)
         }
     }
 
-  server(ipv, port);
+  server(ipv, port, max_users);
 }
 
 // Main
