@@ -226,6 +226,7 @@ int main(int argc, char **argv)
   if (optind >= argc)
     {
       fprintf(stderr, "Error: needed at least one argument [-h|-s|-c]\n");
+      fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
       exit(EXIT_FAILURE);
     }
   

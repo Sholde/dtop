@@ -16,11 +16,11 @@
 
 static void handle_standard()
 {
-  proc_info_t *p = NULL;
+  machine_info_t *m = NULL;
 
-  p = sensor();
-  display(p);
-  free_info(p);
+  m = sensor();
+  display(m);
+  free_info(m);
 }
 
 static void handle_interactif()

@@ -8,10 +8,16 @@
                     PROC_FILLGRP | PROC_FILLSTAT | PROC_FILLSTATUS)
 
 // Structure
-typedef struct proc_info_s
+typedef struct machine_info_s
 {
-  size_t n;
-  proc_t **info;
-} proc_info_t;
+  // Proc
+  size_t nprocess;
+  size_t nproc;
+  proc_t **proc_info;
+
+  // Machine info
+  size_t mem_size;
+  char *name;
+} machine_info_t;
 
 #endif

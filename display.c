@@ -22,28 +22,28 @@ static char *get_time(unsigned long long t)
   return str_time;
 }
 
-void display(proc_info_t *p)
+void display(machine_info_t *m)
 {
   // Test if pointer is not NULL
-  if (!p)
+  if (!m)
     exit(1);
 
   // Compute info
   char *str_time = NULL;
   
   // Print info
-  printf("Process: %ld\n", p->n);
+  printf("Process: %ld\n", m->nprocess);
   printf("%5s %10s %10s %5s %5s %5s %10s %10s %8s %s\n", "TID", "USER", "GROUP",
          "PPID", "CPU", "CPU\%", "RES", "VIRT", "TIME", "COMMAND");
 
-  for (int i = 0; p->info[i] != NULL && i < p->n; i++)
+  for (int i = 0; m->proc_info[i] != NULL && i < m->nprocess; i++)
     {
       // Transform time
-      str_time = get_time(p->info[i]->utime);
+      str_time = get_time(m->proc_info[i]->utime);
 
-      printf("%5d %10s %10s %5d %5d %5.2lf %10ld %10ld %9s %s\n", p->info[i]->tid, p->info[i]->ruser,
-             p->info[i]->rgroup, p->info[i]->ppid, p->info[i]->processor, (double)p->info[i]->pcpu / 100,
-             p->info[i]->rss, p->info[i]->size, str_time, p->info[i]->cmd);
+      printf("%5d %10s %10s %5d %5d %5.2lf %10ld %10ld %9s %s\n", m->proc_info[i]->tid, m->proc_info[i]->ruser,
+             m->proc_info[i]->rgroup, m->proc_info[i]->ppid, m->proc_info[i]->processor, (double)m->proc_info[i]->pcpu / 100,
+             m->proc_info[i]->rss, m->proc_info[i]->size, str_time, m->proc_info[i]->cmd);
 
       // Clean
       free(str_time);

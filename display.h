@@ -3,6 +3,6 @@
 
 #include "struct.h"
 
-void display(proc_info_t *p);
+void display(machine_info_t *p);
 
 #endif
