@@ -13,44 +13,64 @@
 
 void print_help(int argc, char **argv)
 {
-  printf(BOLD "Usage: " RESET "%s [OPTION] filename...\n", argv[0]);
+  // Usage
+  printf(BOLD "Usage: " RESET "%s [OPTION] [ARGUMENT]...\n", argv[0]);
+  printf(BOLD "Options:\n" RESET);
+  printf(BOLD "  -h," RESET " print this help\n");
 
-  printf(BOLD "  -h" RESET ", print this help\n");
-  printf(BOLD "  -c" RESET ", use such client\n");
-  printf(BOLD "  -s" RESET ", use such server\n");
-  printf(BOLD "  -o" RESET ", redirect the actual state of all cpu in the given file\n");
-  printf(BOLD "  -i" RESET ", select the ip address of server\n");
-  printf(BOLD "  -p" RESET ", select a port\n");
-  printf(BOLD "  -4" RESET ", use only ipv4\n");
-  printf(BOLD "  -6" RESET ", use only ipv6\n");
-  printf(BOLD "  -0" RESET ", use ipv4 and ipv6\n");
-  printf(BOLD "  -n" RESET ", select ncurses output\n");
-  printf(BOLD "  -u" RESET ", select the numbe of max users in server\n");
+  printf("\n");
+
+  // Server
+  printf(BOLD "  SERVER:\n" RESET);
+  printf(BOLD "    -s           " RESET " use such server\n");
+  printf(BOLD "    -p <port>    " RESET " select a port\n");
+  printf(BOLD "    -u <number>  " RESET " select the numbe of max users in server\n");
+  printf(BOLD "    -4           " RESET " use only ipv4\n");
+  printf(BOLD "    -6           " RESET " use only ipv6\n");
+  printf(BOLD "    -0           " RESET " use ipv4 and ipv6\n");
+
+
+  printf("\n");
+
+  // Client
+  printf(BOLD "  CLIENT:\n" RESET);
+  printf(BOLD "    -c           " RESET " use such client\n");
+  printf(BOLD "    -o <filename>" RESET " redirect output in the given file\n");
+  printf(BOLD "    -n           " RESET " select interactif output (with ncurse)\n");
+  printf(BOLD "    -i <ip>      " RESET " select the ip address of server\n");
+  printf(BOLD "    -p <port>    " RESET " select the port of server\n");
+  printf(BOLD "    -4           " RESET " use only ipv4\n");
+  printf(BOLD "    -6           " RESET " use only ipv6\n");
+  printf(BOLD "    -0           " RESET " use ipv4 and ipv6\n");
 }
 
 void handle_client(int argc, char **argv)
 {
   // Declare varible
-  int fd = -1;
   int opt = 0;
-  int ipv = 0;
+  int fd = -1;
+  int ipv = -1;
   char *ip = NULL;
   char *port = NULL;
   int mode = 0;
-  
+  int error = 0;
+
+  // Parse argument
   while ((opt = getopt(argc, argv, "046ni:p:o:")) != -1)
     {
       switch (opt)
         {
-        case '0':
-        case '4':
-        case '6':
+        case '0': /* ipv4 and ipv6 */
+        case '4': /* ipv4 */
+        case '6': /* ipv6 */
           ipv = opt - '0';
+          break;
+          
         case 'o': /* output */
-
           // Redirect printf
           fd = open(optarg, O_CREAT | O_WRONLY, 0666);
           dup2(fd, STDOUT_FILENO);
+          break;
 
         case 'i': /* ip */
           ip = optarg;
@@ -64,17 +84,38 @@ void handle_client(int argc, char **argv)
           mode = 1;
           break;
 
-        case '?': /* '?' */
-          fprintf(stderr, "Usage: %s [OPTION] filename\n", argv[0]);
-          exit(EXIT_FAILURE);
-          break;
-
         default: /* print */
-          mode = 0;
+          fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
+          exit(EXIT_FAILURE);
           break;
         }
     }
 
+  // Checking argument
+  if (ip == NULL)
+    {
+      fprintf(stderr, "Error: expected option -i with an valid ip address\n");
+      error = 1;
+    }
+
+  if (port == NULL)
+    {
+      fprintf(stderr, "Error: expected option -p with a POSITIVE number\n");
+      error = 1;
+    }
+
+  if (ipv == -1)
+    {
+      fprintf(stderr, "Error: expected option [-0|-4|-6]\n");
+      error = 1;
+    }
+
+  if (error)
+    {
+      exit(EXIT_FAILURE);
+    }
+  
+  // Select mode
   if (mode)
     {
       client(ipv, INTERACTIF, ip, port);
@@ -83,7 +124,6 @@ void handle_client(int argc, char **argv)
     {
       client(ipv, STANDARD, ip, port);
     }
-
 
   // Close file descriptor
   if (fd != -1)
@@ -94,10 +134,12 @@ void handle_server(int argc, char **argv)
 {
   // Declare variable
   int opt = 0;
-  int ipv = 0;
+  int ipv = -1;
   char *port = NULL;
   int max_users = -1;
-  
+  int error = 0;
+
+  // Parse argument
   while ((opt = getopt(argc, argv, "046p:u:")) != -1)
     {
       switch (opt)
@@ -117,10 +159,34 @@ void handle_server(int argc, char **argv)
           break;
 
         default: /* '?' */
-          fprintf(stderr, "Error: bad argument, needed [-0|-4|-6]\n");
+          fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
           exit(EXIT_FAILURE);
           break;
         }
+    }
+
+  // Checking argument
+  if (port == NULL)
+    {
+      fprintf(stderr, "Error: expected option -p with a POSITIVE number\n");
+      error = 1;
+    }
+
+  if (ipv == -1)
+    {
+      fprintf(stderr, "Error: expected option [-0|-4|-6]\n");
+      error = 1;
+    }
+
+  if (max_users == -1)
+    {
+      fprintf(stderr, "Error: expected option -u with a POSITIVE number\n");
+      error = 1;
+    }
+
+  if (error)
+    {
+      exit(EXIT_FAILURE);
     }
 
   server(ipv, port, max_users);
@@ -150,12 +216,19 @@ int main(int argc, char **argv)
         break;
 
       default: /* '?' */
-        fprintf(stderr, "Error: bad argument, needed [-h|-s|-c]\n");
+        fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
         exit(EXIT_FAILURE);
         break;
       }
     }
 
+  // Check if all arg are parse
+  if (optind >= argc)
+    {
+      fprintf(stderr, "Error: needed at least one argument [-h|-s|-c]\n");
+      exit(EXIT_FAILURE);
+    }
+  
   //
   return 0;
 }
