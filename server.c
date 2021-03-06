@@ -15,7 +15,7 @@
 
 #include "server.h"
 
-void *client_loop(void *arg)
+static void *client_loop(void *arg)
 {
   // Recast argument
   server_t *serv = (server_t *)arg;
@@ -27,6 +27,8 @@ void *client_loop(void *arg)
   client_info_t *client = serv->client;
   struct sockaddr_in *addr = (struct sockaddr_in *)client->info;
   printf("New connection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
+
+  //
 
   // Deconnexion
   close(serv->client->client_socket);
@@ -41,7 +43,46 @@ void *client_loop(void *arg)
   return NULL;
 }
 
-int search_place(server_t *serv)
+static server_t *init_server(const int max_users)
+{
+  server_t *serv = malloc(sizeof(server_t));
+
+  if (!serv)
+    {
+      fprintf(stderr, "Error: canno't allocate memory\n");
+      exit(EXIT_FAILURE);
+    }
+  
+  serv->client = malloc(sizeof(client_info_t) * max_users);
+  
+  if (!serv->client)
+    {
+      fprintf(stderr, "Error: canno't allocate memory\n");
+      exit(EXIT_FAILURE);
+    }
+
+  serv->nb_users = 0;
+  serv->max_users = max_users;
+
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      serv->client[i].id = -1;
+      serv->client[i].active = 0;
+      serv->client[i].client_socket = -1;
+      serv->client[i].info = NULL;
+      serv->client[i].machine_info = NULL;
+    }
+
+  return serv;
+}
+
+static void destroy_server(server_t *serv)
+{
+  free(serv->client);
+  free(serv);
+}
+
+static int search_place(const server_t *serv)
 {
   for (int i = 0; i < serv->max_users; i++)
     {
@@ -54,9 +95,8 @@ int search_place(server_t *serv)
   return -1;
 }
 
-void server(int ipv, char *port, int max_users)
+static void server_check_argument(const int ipv, const int max_users)
 {
-  // Check argument
   if (ipv != 4 && ipv != 6 && ipv != 10)
     {
       fprintf(stderr, "Error: bad ip version %d\n", ipv);
@@ -68,7 +108,10 @@ void server(int ipv, char *port, int max_users)
       fprintf(stderr, "Error: bad number of max users %d\n", max_users);
       exit(1);
     }
-  
+}
+
+static int server_bind(const int ipv, const char *port)
+{
   // Init address info variable
   struct addrinfo *addr_info  = NULL;
   struct addrinfo  hints;
@@ -134,36 +177,27 @@ void server(int ipv, char *port, int max_users)
       exit(EXIT_FAILURE);
     }
 
-  // Listen
-  ret = listen(listen_sock, 2);
+  return listen_sock;
+}
+
+static void server_listen(const int listen_sock, const int max_users)
+{
+  int ret = listen(listen_sock, max_users);
 
   if (ret < 0)
     {
       perror("listen");
       exit(EXIT_FAILURE);
     }
+}
 
-  // Server
+static void server_accept(const int listen_sock, const int max_users)
+{
   struct sockaddr client_info;
   socklen_t addrlen;
 
-  server_t *serv = malloc(sizeof(server_t));
+  server_t *serv = init_server(max_users);
 
-  if (!serv)
-    {
-      fprintf(stderr, "Error: canno't allocate memory\n");
-      exit(EXIT_FAILURE);
-    }
-  
-  serv->client = malloc(sizeof(client_info_t));
-  
-  if (!serv->client)
-    {
-      fprintf(stderr, "Error: canno't allocate memory\n");
-      exit(EXIT_FAILURE);
-    }
-
-  // Server
   while (1) /* infinite loop */
     {
       // Accept client
@@ -206,10 +240,24 @@ void server(int ipv, char *port, int max_users)
         }
     }
 
+  // Clean
+  destroy_server(serv);
+}
+
+void server(int ipv, char *port, int max_users)
+{
+  // Check argument
+  server_check_argument(ipv, max_users);
+  
+  // Bind
+  int listen_sock = server_bind(ipv, port);
+              
+  // Listen
+  server_listen(listen_sock, max_users);
+  
+  // Accept
+  server_accept(listen_sock, max_users);
+
   // Close listen socket
   close(listen_sock);
-
-  // Clean
-  free(serv->client);
-  free(serv);
 }

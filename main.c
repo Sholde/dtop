@@ -229,7 +229,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
       exit(EXIT_FAILURE);
     }
-  
+
   //
   return 0;
 }
