@@ -50,7 +50,7 @@ static unsigned get_cpu_usage(proc_t *info)
 }
 
 // Main function for sensor
-proc_info_t *sensor(void)
+machine_info_t *sensor(void)
 {
   // Define which information we want
   PROCTAB *tab = openproc(PROC_FLAGS);
@@ -65,29 +65,29 @@ proc_info_t *sensor(void)
   closeproc(tab);
 
   // Init structure
-  proc_info_t *p = malloc(sizeof(proc_info_t));
-  p->info = info;
-  while (p->info[count] != NULL)
+  machine_info_t *m = malloc(sizeof(machine_info_t));
+  m->proc_info = info;
+  while (m->proc_info[count] != NULL)
     {
-      p->info[count]->pcpu = get_cpu_usage(p->info[count]);
+      m->proc_info[count]->pcpu = get_cpu_usage(m->proc_info[count]);
       count++;
     }
-  p->n = count;
+  m->n = count;
 
-  // Return the structure p
-  return p;
+  // Return the structure m
+  return m;
 }
 
 // Main function for display
-void free_info(proc_info_t *p)
+void free_info(machine_info_t *m)
 {
   // Free all proc_t *
-  for (int i = 0; p->info[i] != NULL && i < p->n; i++)
+  for (int i = 0; m->proc_info[i] != NULL && i < m->n; i++)
     {
-      freeproc(p->info[i]);
+      freeproc(m->proc_info[i]);
     }
 
   // Free struct
-  free(p);
+  free(m);
 }
 
