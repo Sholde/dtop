@@ -15,35 +15,44 @@
 
 #include "server.h"
 
-typedef struct client_info_s
-{
-  int client_socket;
-  struct sockaddr *info;
-} client_info_t;
-
 void *client_loop(void *arg)
 {
-  client_info_t *client = (client_info_t *)arg;
+  // Recast argument
+  server_t *serv = (server_t *)arg;
 
+  // Increment user
+  serv->nb_users++;
+
+  // Connexion
+  client_info_t *client = serv->client;
   struct sockaddr_in *addr = (struct sockaddr_in *)client->info;
-
   printf("New connection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 
-  close(client->client_socket);
-
+  // Deconnexion
+  close(serv->client->client_socket);
   printf("Deconnection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 
-  free(client);
+  // Decrement user
+  serv->nb_users--;
+
+  // Clean
+  free(serv->client);
 
   return NULL;
 }
 
-void server(int ipv, char *port)
+void server(int ipv, char *port, int max_users)
 {
   // Check argument
   if (ipv != 4 && ipv != 6 && ipv != 10)
     {
       fprintf(stderr, "Error: bad ip version %d\n", ipv);
+      exit(1);
+    }
+
+  if (max_users < 0)
+    {
+      fprintf(stderr, "Error: bad number of max users %d\n", max_users);
       exit(1);
     }
   
@@ -123,35 +132,59 @@ void server(int ipv, char *port)
 
   // Server
   struct sockaddr client_info;
-  socklen_t addrlen;  
+  socklen_t addrlen;
+  memset(&client_info, 0, sizeof(client_info));
+
+  server_t *serv = malloc(sizeof(server_t) * 1);
+
+  if (!serv)
+    {
+      fprintf(stderr, "Error: canno't allocate memory\n");
+      exit(EXIT_FAILURE);
+    }
 
   // Server
   while (1) /* infinite loop */
     {
+      // Accept client
       int client_socket = accept(listen_sock, &client_info, &addrlen);
 
+      // Checking accept
       if (client_socket < 0)
         {
           perror("accept");
           exit(EXIT_FAILURE);
         }
 
-      client_info_t *client = malloc(sizeof(client_info_t));
-
-      if (!client)
+      // Test if we have place for new user
+      if (serv->nb_users >= max_users)
         {
-          fprintf(stderr, "Error: canno't allocate memory\n");
-          exit(EXIT_FAILURE);
+          close(client_socket);
         }
-      
-      client->client_socket = client_socket;
-      client->info = &client_info;
+      else // If we have place for new user
+        {
+          // Fill structure
+          serv->client = malloc(sizeof(client_info_t));
 
-      pthread_t th;
+          if (!serv->client)
+            {
+              fprintf(stderr, "Error: canno't allocate memory\n");
+              exit(EXIT_FAILURE);
+            }
       
-      pthread_create(&th, NULL, client_loop, client);
-      pthread_detach(th);
+          serv->client->client_socket = client_socket;
+          serv->client->info = &client_info;
+
+          // Throw thread
+          pthread_t th;
+          pthread_create(&th, NULL, client_loop, serv);
+          pthread_detach(th);
+        }
     }
 
+  // Close listen socket
   close(listen_sock);
+
+  // Clean
+  free(serv);
 }
