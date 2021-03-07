@@ -54,6 +54,11 @@ machine_info_t *sensor(void)
 {
   // Define which information we want
   PROCTAB *tab = openproc(PROC_FLAGS);
+  if (!tab)
+    {
+      perror("openproc");
+      exit(EXIT_FAILURE);
+    }
 
   // Counter of running process
   int count = 0;
@@ -66,6 +71,7 @@ machine_info_t *sensor(void)
 
   // Init structure
   machine_info_t *m = malloc(sizeof(machine_info_t));
+
   m->proc_info = info;
   while (m->proc_info[count] != NULL)
     {
