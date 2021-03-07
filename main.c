@@ -225,7 +225,6 @@ int main(int argc, char **argv)
   // Check if all arg are parse
   if (optind > argc)
     {
-      fprintf(stderr, "%d %d\n", optind, argc);
       fprintf(stderr, "Error: needed at least one argument [-h|-s|-c]\n");
       fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
       exit(EXIT_FAILURE);
