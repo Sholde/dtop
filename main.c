@@ -24,7 +24,7 @@ void print_help(int argc, char **argv)
   printf(BOLD "  SERVER:\n" RESET);
   printf(BOLD "    -s           " RESET " use such server\n");
   printf(BOLD "    -p <port>    " RESET " select a port\n");
-  printf(BOLD "    -u <number>  " RESET " select the numbe of max users in server\n");
+  printf(BOLD "    -u <number>  " RESET " select the number of max users in server\n");
   printf(BOLD "    -4           " RESET " use only ipv4\n");
   printf(BOLD "    -6           " RESET " use only ipv6\n");
   printf(BOLD "    -0           " RESET " use ipv4 and ipv6\n");

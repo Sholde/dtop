@@ -49,7 +49,7 @@ Options:
   SERVER:
     -s            use such server
     -p <port>     select a port
-    -u <number>   select the numbe of max users in server
+    -u <number>   select the number of max users in server
     -4            use only ipv4
     -6            use only ipv6
     -0            use ipv4 and ipv6
