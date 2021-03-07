@@ -68,3 +68,25 @@ Options:
 * License
 
   GNU General Public License v3.0 ([[https://github.com/aisetop/dtop/blob/master/LICENSE][see License]])
+* List of fonctionnality
+** Base
+
+   | Code | Component                      | Description                                | Implemented |
+   |------+--------------------------------+--------------------------------------------+-------------|
+   | A1   | Build system                   | Makefile and Git                           | YES         |
+   | A2   | Communication sensor/interface | Network (via getaddrinfo / pthread method) | NO          |
+   | A3   | Sensor                         | readproc (procps)                          | YES         |
+   | A4   | Interface                      | output (stdout or file)                    | YES         |
+   | A5   | Report                         | Format pdf                                 | NO          |
+
+** Bonus
+
+   | Code | Component         | Description                                | Implemented |
+   |------+-------------------+--------------------------------------------+-------------|
+   | B1   | Advanced client   | don't understand                           | NO          |
+   | B2   | Multi client      | pthread method                             | YES         |
+   | B3   | CLI               | getopt and help                            | YES         |
+   | B4   | Plugin            | -                                          | NO          |
+   | B5   | Interactif        | filtered (come with ncurses support maybe) | NO          |
+   | B6   | GUI               | ncurses mode                               | NO          |
+   | B7   | Compatibility I/O | json output                                | NO          |
