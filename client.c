@@ -28,14 +28,25 @@ static void handle_interactif()
   fprintf(stderr, "Not yet implemented!\n");
 }
 
-void client(int ipv, enum mode_client mode, char *ip, char *port)
+static void client_check_arg(int ipv, enum mode_client mode)
 {
-  //
+  // IP version
+  if (ipv != 4 && ipv != 6 && ipv != 0)
+    {
+      fprintf(stderr, "Error: bad ip version\n");
+      exit(EXIT_FAILURE);
+    }
+
+  // mode
   if (mode != INTERACTIF && mode != STANDARD)
     {
       fprintf(stderr, "Error: bad mode\n");
       exit(EXIT_FAILURE);
     }
+}
+
+static int client_connect(const int ipv, const char *ip, const char *port)
+{
   // Init address info variable
   struct addrinfo *addr_info  = NULL;
   struct addrinfo  hints;
@@ -101,7 +112,18 @@ void client(int ipv, enum mode_client mode, char *ip, char *port)
       exit(EXIT_FAILURE);
     }
 
-  //
+  return sock;
+}
+
+void client(int ipv, enum mode_client mode, char *ip, char *port)
+{
+  // Checking argument
+  client_check_arg(ipv, mode);
+  
+  // Connect
+  int sock = client_connect(ipv, ip, port);
+  
+  // Select mode
   switch (mode)
     {
     case STANDARD:

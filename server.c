@@ -38,7 +38,9 @@ static void *client_loop(void *arg)
   serv->nb_users--;
 
   // Disable
+  close(serv->client->client_socket);
   serv->client->active = 0;
+
 
   return NULL;
 }
@@ -97,7 +99,7 @@ static int search_place(const server_t *serv)
 
 static void server_check_argument(const int ipv, const int max_users)
 {
-  if (ipv != 4 && ipv != 6 && ipv != 10)
+  if (ipv != 4 && ipv != 6 && ipv != 0)
     {
       fprintf(stderr, "Error: bad ip version %d\n", ipv);
       exit(1);
