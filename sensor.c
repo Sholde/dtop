@@ -46,7 +46,7 @@ static unsigned get_cpu_usage(proc_t *info)
   if (cpu_usage <= 0)
     cpu_usage = 0;
 
-  return (unsigned) cpu_usage * 100;
+  return (unsigned) (cpu_usage * 100);
 }
 
 // Main function for sensor
