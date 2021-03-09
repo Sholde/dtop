@@ -8,7 +8,7 @@ typedef struct client_info_s
   size_t id;
   char active;
   int client_socket;
-  struct sockaddr *info;
+  struct sockaddr_in *info;
   machine_info_t *machine_info;
 } client_info_t;
 
