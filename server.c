@@ -99,7 +99,7 @@ static int search_place(const server_t *serv)
 
 static void server_check_argument(const int ipv, const int max_users)
 {
-  if (ipv != 4 && ipv != 6 && ipv != 0)
+  if (ipv != 4 && ipv != 6)
     {
       fprintf(stderr, "Error: bad ip version %d\n", ipv);
       exit(1);
@@ -130,7 +130,7 @@ static int server_bind(const int ipv, const char *port)
     }
   else
     {
-      hints.ai_family = AF_UNSPEC;
+      hints.ai_family = AF_INET;
     }
 
   hints.ai_socktype = SOCK_STREAM;

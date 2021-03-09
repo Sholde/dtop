@@ -27,8 +27,6 @@ void print_help(int argc, char **argv)
   printf(BOLD "    -u <number>  " RESET " select the number of max users in server\n");
   printf(BOLD "    -4           " RESET " use only ipv4\n");
   printf(BOLD "    -6           " RESET " use only ipv6\n");
-  printf(BOLD "    -0           " RESET " use ipv4 and ipv6\n");
-
 
   printf("\n");
 
@@ -41,7 +39,6 @@ void print_help(int argc, char **argv)
   printf(BOLD "    -p <port>    " RESET " select the port of server\n");
   printf(BOLD "    -4           " RESET " use only ipv4\n");
   printf(BOLD "    -6           " RESET " use only ipv6\n");
-  printf(BOLD "    -0           " RESET " use ipv4 and ipv6\n");
 }
 
 void handle_client(int argc, char **argv)
@@ -60,7 +57,6 @@ void handle_client(int argc, char **argv)
     {
       switch (opt)
         {
-        case '0': /* ipv4 and ipv6 */
         case '4': /* ipv4 */
         case '6': /* ipv6 */
           ipv = opt - '0';
@@ -106,7 +102,7 @@ void handle_client(int argc, char **argv)
 
   if (ipv == -1)
     {
-      fprintf(stderr, "Error: expected option [-0|-4|-6]\n");
+      fprintf(stderr, "Error: expected option [-4|-6]\n");
       error = 1;
     }
 
@@ -140,11 +136,10 @@ void handle_server(int argc, char **argv)
   int error = 0;
 
   // Parse argument
-  while ((opt = getopt(argc, argv, "046p:u:")) != -1)
+  while ((opt = getopt(argc, argv, "46p:u:")) != -1)
     {
       switch (opt)
         {
-        case '0': /* ipv4 and ipv6 */
         case '4': /* ipv4 */
         case '6': /* ipv6 */
           ipv = opt - '0';
@@ -174,7 +169,7 @@ void handle_server(int argc, char **argv)
 
   if (ipv == -1)
     {
-      fprintf(stderr, "Error: expected option [-0|-4|-6]\n");
+      fprintf(stderr, "Error: expected option [-4|-6]\n");
       error = 1;
     }
 
@@ -225,7 +220,7 @@ int main(int argc, char **argv)
   // Check if all arg are parse
   if (optind > argc)
     {
-      fprintf(stderr, "Error: needed at least one argument [-h|-s|-c]\n");
+      fprintf(stderr, "Error: bad arguments\n");
       fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
       exit(EXIT_FAILURE);
     }
