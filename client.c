@@ -31,7 +31,7 @@ static void handle_interactif()
 static void client_check_arg(int ipv, enum mode_client mode)
 {
   // IP version
-  if (ipv != 4 && ipv != 6 && ipv != 0)
+  if (ipv != 4 && ipv != 6)
     {
       fprintf(stderr, "Error: bad ip version\n");
       exit(EXIT_FAILURE);
@@ -63,7 +63,7 @@ static int client_connect(const int ipv, const char *ip, const char *port)
     }
   else
     {
-      hints.ai_family = AF_UNSPEC;
+      hints.ai_family = AF_INET;
     }
 
   hints.ai_socktype = SOCK_STREAM;
