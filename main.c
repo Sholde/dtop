@@ -190,6 +190,14 @@ void handle_server(int argc, char **argv)
 // Main
 int main(int argc, char **argv)
 {
+  // Check if we have least one argument
+  if (argc == 1)
+    {
+      fprintf(stderr, "Error: expected at least one argument\n");
+      fprintf(stderr, "For more information, try: %s -h\n", argv[0]);
+      exit(EXIT_FAILURE);
+    }
+
   // Check argument with getopt
   int opt = 0;
   
