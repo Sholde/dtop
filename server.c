@@ -20,12 +20,6 @@
 
 int stop_server = 0;
 
-static void handle_client_socket(server_t *serv, int sock, int index)
-{
-  // read from client
-  //  read(sock, serv->client[index].machine_info, sizeof(machine_info_t));
-}
-
 static server_t *init_server(const int max_users)
 {
   server_t *serv = malloc(sizeof(server_t));
@@ -176,6 +170,12 @@ static void server_listen(const int listen_sock, const int max_users)
     }
 }
 
+static void handle_stop(int sig)
+{
+  stop_server = 1;
+  printf("\n");
+}
+
 static void server_accept(const int listen_sock, const int max_users)
 {
   fd_set active_fd_set, read_fd_set;
@@ -190,10 +190,18 @@ static void server_accept(const int listen_sock, const int max_users)
       read_fd_set = active_fd_set;
 
       // Block until data arrive on one or more socket
-      if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL ) < 0 )
+      if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL ) < 0)
         {
-          perror("select");
-          exit(EXIT_FAILURE);
+          if (!stop_server)
+            {
+              perror("select");
+              exit(EXIT_FAILURE);
+            }
+          else
+            {
+              // Case we have teminate server with a sigint signal
+              break;
+            }
         }
 
       // Handle all client
@@ -334,6 +342,9 @@ void server(int ipv, char *port, int max_users)
 {
   // Check argument
   server_check_argument(ipv, max_users);
+
+  // Handle signal
+  signal(SIGINT, handle_stop);
 
   // Bind
   int listen_sock = server_bind(ipv, port);
