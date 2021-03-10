@@ -2,6 +2,7 @@
 #include <string.h> // memset
 #include <stdlib.h> // malloc
 #include <proc/readproc.h>
+#include <sys/sysinfo.h>
 
 #include "sensor.h"
 
@@ -88,6 +89,18 @@ machine_info_t *sensor(void)
       count++;
     }
   m->nprocess = count;
+
+  int ret = gethostname(m->name, 128);
+  
+  if (ret < 0)
+    {
+      perror("gethostname");
+      exit(EXIT_FAILURE);
+    }
+
+  m->nproc = get_nprocs();
+  if (count)
+    m->mem_size = m->proc_info[0].vsize;
 
   free_info(info, count);
 

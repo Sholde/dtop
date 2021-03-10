@@ -21,11 +21,15 @@ int stop_client = 0;
 
 static void handle_standard(int sock)
 {
+  int refresh_counter = 0;
   machine_info_t *m = NULL;
   server_t serv;
   
   while (!stop_client)
     {
+      refresh_counter++;
+
+      // monitoring
       m = sensor();
 
       // write on fd m
@@ -43,6 +47,9 @@ static void handle_standard(int sock)
         }
 
       // display
+      printf("\n");
+      printf("Refresh: %d\n", refresh_counter);
+      
       for (int i = 0; i < serv.max_users; i++)
         {
           if (serv.client[i].active)
