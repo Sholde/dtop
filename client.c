@@ -2,6 +2,7 @@
 #include <stdlib.h> // NULL
 #include <string.h> // memset
 #include <unistd.h> // close
+#include <errno.h>  // errno
 
 // getaddrinfo
 #include <sys/types.h>
@@ -13,19 +14,46 @@
 #include "display.h"
 #include "server.h"
 #include "client.h"
+#include "io.h"
 
-static void handle_standard()
+static void handle_standard(int sock)
 {
   machine_info_t *m = NULL;
+  server_t serv;
+  
+  while (1)
+    {
+      m = sensor();
 
-  m = sensor();
-  display(m);
-  free_info(m);
+      // write on fd m
+      safe_write(sock, m, sizeof(machine_info_t));
+      free(m);
+      
+      // read on fd serv
+      int nbytes = 0;
+
+      nbytes = safe_read(sock, &serv, sizeof(server_t));
+
+      if (nbytes == -1)
+        {
+          exit(EXIT_FAILURE);
+        }
+
+      // display
+      for (int i = 0; i < serv.max_users; i++)
+        {
+          if (serv.client[i].active)
+            display(&(serv.client[i].machine_info));
+        }
+    }
 }
 
-static void handle_interactif()
+static void handle_interactif(int sock)
 {
   fprintf(stderr, "Not yet implemented!\n");
+  machine_info_t *m = sensor();
+  display(m);
+  free(m);
 }
 
 static void client_check_arg(int ipv, enum mode_client mode)
@@ -119,19 +147,19 @@ void client(int ipv, enum mode_client mode, char *ip, char *port)
 {
   // Checking argument
   client_check_arg(ipv, mode);
-  
+
   // Connect
   int sock = client_connect(ipv, ip, port);
-  
+
   // Select mode
   switch (mode)
     {
     case STANDARD:
-      handle_standard();
+      handle_standard(sock);
       break;
       
     case INTERACTIF:
-      handle_interactif();
+      handle_interactif(sock);
       break;
       
     default:

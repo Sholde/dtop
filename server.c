@@ -3,6 +3,7 @@
 #include <string.h>  // memset
 #include <unistd.h>  // close
 #include <pthread.h> // pthread
+#include <errno.h>   // errno
 
 // getaddrinfo
 #include <sys/types.h>
@@ -14,35 +15,12 @@
 #include <arpa/inet.h>
 
 #include "server.h"
+#include "io.h"
 
-static void *client_loop(void *arg)
+static void handle_client_socket(server_t *serv, int sock, int index)
 {
-  // Recast argument
-  server_t *serv = (server_t *)arg;
-
-  // Increment user
-  serv->nb_users++;
-
-  // Connexion
-  client_info_t *client = serv->client;
-  struct sockaddr_in *addr = (struct sockaddr_in *)client->info;
-  printf("New connection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-
-  //
-
-  // Deconnexion
-  close(serv->client->client_socket);
-  printf("Deconnection from %s:%d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-
-  // Decrement user
-  serv->nb_users--;
-
-  // Disable
-  close(serv->client->client_socket);
-  serv->client->active = 0;
-
-
-  return NULL;
+  // read from client
+  //  read(sock, serv->client[index].machine_info, sizeof(machine_info_t));
 }
 
 static server_t *init_server(const int max_users)
@@ -55,14 +33,6 @@ static server_t *init_server(const int max_users)
       exit(EXIT_FAILURE);
     }
   
-  serv->client = malloc(sizeof(client_info_t) * max_users);
-  
-  if (!serv->client)
-    {
-      fprintf(stderr, "Error: canno't allocate memory\n");
-      exit(EXIT_FAILURE);
-    }
-
   serv->nb_users = 0;
   serv->max_users = max_users;
 
@@ -71,8 +41,6 @@ static server_t *init_server(const int max_users)
       serv->client[i].id = -1;
       serv->client[i].active = 0;
       serv->client[i].client_socket = -1;
-      serv->client[i].info = NULL;
-      serv->client[i].machine_info = NULL;
     }
 
   return serv;
@@ -80,7 +48,6 @@ static server_t *init_server(const int max_users)
 
 static void destroy_server(server_t *serv)
 {
-  free(serv->client);
   free(serv);
 }
 
@@ -97,6 +64,19 @@ static int search_place(const server_t *serv)
   return -1;
 }
 
+static int search_socket(const server_t *serv, int sock)
+{
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      if (serv->client[i].active && serv->client[i].client_socket == sock)
+        {
+          return i;
+        }
+    }
+ 
+  return -1;
+}
+
 static void server_check_argument(const int ipv, const int max_users)
 {
   if (ipv != 4 && ipv != 6)
@@ -105,7 +85,7 @@ static void server_check_argument(const int ipv, const int max_users)
       exit(1);
     }
 
-  if (max_users < 0)
+  if (max_users < 0 || max_users >= MAX_CLIENT)
     {
       fprintf(stderr, "Error: bad number of max users %d\n", max_users);
       exit(1);
@@ -195,52 +175,140 @@ static void server_listen(const int listen_sock, const int max_users)
 
 static void server_accept(const int listen_sock, const int max_users)
 {
-  struct sockaddr client_info;
-  socklen_t addrlen;
-
+  fd_set active_fd_set, read_fd_set;
+  /* Initialize the set of active sockets */
+  FD_ZERO(&active_fd_set);
+  FD_SET(listen_sock, &active_fd_set);
+  
   server_t *serv = init_server(max_users);
 
   while (1) /* infinite loop */
     {
-      // Accept client
-      int client_socket = accept(listen_sock, &client_info, &addrlen);
+      read_fd_set = active_fd_set;
 
-      // Checking accept
-      if (client_socket < 0)
+      // Block until data arrive on one or more socket
+      if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL ) < 0 )
         {
-          perror("accept");
+          perror("select");
           exit(EXIT_FAILURE);
         }
 
-      // Test if we have place for new user
-      if (serv->nb_users >= max_users)
-        {
-          close(client_socket);
+      // Handle all client
+      for (int i = 0; i < FD_SETSIZE; i++)
+        if (FD_ISSET(i, &read_fd_set))
+          {
+            if (i == listen_sock)
+              {
+                // Event of listen socket
+                struct sockaddr_in client_info;
+                unsigned int addr_size = sizeof(struct sockaddr_in);
+                int client_socket = accept(listen_sock, (struct sockaddr *)&client_info, &addr_size);
+
+                if (client_socket < 0)
+                  {
+                    perror("accept");
+                    exit(EXIT_FAILURE);
+                  }
+
+                // To test
+                if (FD_ISSET(client_socket, &active_fd_set))
+                  {
+                    fprintf(stderr, "Client already connected %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
+                    close(client_socket);
+                    continue;
+                  }
+
+                // Test if we have place for new user
+                if (serv->nb_users >= max_users)
+                  {
+                    fprintf(stderr, "Error: a user try to connect but we are full %d/%d users\n", serv->nb_users, serv->max_users);
+                    close(client_socket);
+                    continue;
+                  }
+                else // If we have place for new user
+                  {
+                    // Search place
+                    int index = search_place(serv);
+
+                    if (index == -1)
+                      {
+                        fprintf(stderr, "Error: canno't find place\n");
+                        exit(EXIT_FAILURE);
+                      }
+
+                    // Fill structure
+                    serv->client[index].id = index;
+                    serv->client[index].active = 1;
+                    serv->client[index].client_socket = client_socket;
+                    memcpy(&(serv->client[index].info), &client_info, sizeof(struct sockaddr_in));
+                  }
+
+                // Print deconnection message
+                fprintf(stderr, "New connection from %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
+
+                // Adding new client socket
+                FD_SET(client_socket, &active_fd_set);
+
+                // Increment user
+                serv->nb_users++;
+
+                // Print number of users
+                fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+              }
+            else
+              {
+                // Search
+                int index = search_socket(serv, i);
+
+                if (index == -1)
+                  {
+                    fprintf(stderr, "Error: canno't find socket\n");
+                    exit(EXIT_FAILURE);
+                  }
+
+                // Handle
+                machine_info_t machine_buff;
+                int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
+
+                if (nbytes < 0)
+                  {
+                    perror("read");
+                    exit(EXIT_FAILURE);
+                  }
+                else if (nbytes == -1)
+                  {
+                    // Print deconnection message
+                    fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
+
+                    // Deconnect
+                    close(i);
+                    FD_CLR(i, &active_fd_set);
+
+                    // Decrement user
+                    serv->nb_users--;
+                    serv->client[index].active = 0;
+                    serv->client[index].client_socket = -1;
+
+                    // Print number of users
+                    fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+                  }
+                else
+                  {
+                    // Copy info from buff
+                    memcpy(&(serv->client[index].machine_info), &machine_buff, sizeof(machine_info_t));
+                  }
+              }
+
+            // Send message of all active socket (~ all client)
+            for (int i = 0; i < serv->max_users; i++)
+              {
+                if (serv->client[i].active)
+                  {
+                    safe_write(serv->client[i].client_socket, serv, sizeof(server_t));
+                  }
+              }
+          }
         }
-      else // If we have place for new user
-        {
-          // Search place
-          int index = search_place(serv);
-
-          if (index == -1)
-            {
-              fprintf(stderr, "Error: canno't find place\n");
-              exit(EXIT_FAILURE);
-            }
-
-          // Fill structure
-          serv->max_users = max_users;
-          serv->client[index].id = index;
-          serv->client[index].active = 1;
-          serv->client[index].client_socket = client_socket;
-          serv->client[index].info = &client_info;
-
-          // Throw thread
-          pthread_t th;
-          pthread_create(&th, NULL, client_loop, serv);
-          pthread_detach(th);
-        }
-    }
 
   // Clean
   destroy_server(serv);

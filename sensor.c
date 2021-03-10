@@ -49,6 +49,15 @@ static unsigned get_cpu_usage(proc_t *info)
   return (unsigned) (cpu_usage * 100);
 }
 
+static void free_info(proc_t **info, int count)
+{
+  // Free all proc_t *
+  for (int i = 0; info[i] != NULL && i < count; i++)
+    {
+      freeproc(info[i]);
+    }
+}
+
 // Main function for sensor
 machine_info_t *sensor(void)
 {
@@ -72,28 +81,17 @@ machine_info_t *sensor(void)
   // Init structure
   machine_info_t *m = malloc(sizeof(machine_info_t));
 
-  m->proc_info = info;
-  while (m->proc_info[count] != NULL)
+  while (info[count] != NULL)
     {
-      m->proc_info[count]->pcpu = get_cpu_usage(m->proc_info[count]);
+      memcpy(&(m->proc_info[count]), info[count], sizeof(proc_t));
+      m->proc_info[count].pcpu = get_cpu_usage(&(m->proc_info[count]));
       count++;
     }
   m->nprocess = count;
 
+  free_info(info, count);
+
   // Return the structure m
   return m;
-}
-
-// Main function for display
-void free_info(machine_info_t *m)
-{
-  // Free all proc_t *
-  for (int i = 0; m->proc_info[i] != NULL && i < m->nprocess; i++)
-    {
-      freeproc(m->proc_info[i]);
-    }
-
-  // Free struct
-  free(m);
 }
 

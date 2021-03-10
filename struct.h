@@ -8,17 +8,19 @@
                     PROC_FILLGRP | PROC_FILLSTAT | PROC_FILLSTATUS |            \
                     PROC_EDITCMDLCVT)
 
+#define MAX_PROCESS 250
+
 // Structure
 typedef struct machine_info_s
 {
   // Proc
   size_t nprocess;
   size_t nproc;
-  proc_t **proc_info;
+  proc_t proc_info[MAX_PROCESS];
 
   // Machine info
   size_t mem_size;
-  char *name;
+  char name[128];
 } machine_info_t;
 
 #endif
