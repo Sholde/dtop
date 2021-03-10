@@ -176,6 +176,122 @@ static void handle_stop(int sig)
   printf("\n");
 }
 
+static void server_deconnect_client(server_t *serv, fd_set active_fd_set)
+{
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      if (serv->client[i].active)
+        {
+          // Deconnect
+          close(serv->client[i].client_socket);
+          FD_CLR(i, &active_fd_set);
+
+          // Decrement user
+          serv->nb_users--;
+          serv->client[i].active = 0;
+          serv->client[i].client_socket = -1;
+        }
+    }
+}
+
+static void server_select_client(server_t *serv, int listen_sock, int i, fd_set *active_fd_set)
+{
+  // Event of listen socket
+  struct sockaddr_in client_info;
+  unsigned int addr_size = sizeof(struct sockaddr_in);
+  int client_socket = accept(listen_sock, (struct sockaddr *)&client_info, &addr_size);
+
+  if (client_socket < 0)
+    {
+      perror("accept");
+      exit(EXIT_FAILURE);
+    }
+
+  // If client are already connected
+  if (FD_ISSET(client_socket, active_fd_set))
+    {
+      fprintf(stderr, "Client already connected %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
+      close(client_socket);
+      return;
+    }
+
+  // Test if we have place for new user
+  if (serv->nb_users >= serv->max_users)
+    {
+      fprintf(stderr, "Error: a user try to connect but we are full %d/%d users\n", serv->nb_users, serv->max_users);
+      close(client_socket);
+      return;
+    }
+  else // If we have place for new user
+    {
+      // Search place
+      int index = search_place(serv);
+
+      if (index == -1)
+        {
+          fprintf(stderr, "Error: canno't find place\n");
+          exit(EXIT_FAILURE);
+        }
+
+      // Fill structure
+      serv->client[index].id = index;
+      serv->client[index].active = 1;
+      serv->client[index].client_socket = client_socket;
+      memcpy(&(serv->client[index].info), &client_info, sizeof(struct sockaddr_in));
+    }
+
+  // Print deconnection message
+  fprintf(stderr, "New connection from %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
+
+  // Adding new client socket
+  FD_SET(client_socket, active_fd_set);
+
+  // Increment user
+  serv->nb_users++;
+
+  // Print number of users
+  fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+}
+
+static inline void server_handle_read(server_t *serv, int i, fd_set *active_fd_set)
+{
+  // Search
+  int index = search_socket(serv, i);
+
+  if (index == -1)
+    {
+      fprintf(stderr, "Error: canno't find socket\n");
+      exit(EXIT_FAILURE);
+    }
+
+  // Handle
+  machine_info_t machine_buff;
+  int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
+
+  if (nbytes == -1)
+    {
+      // Print deconnection message
+      fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
+
+      // Deconnect
+      close(i);
+      FD_CLR(i, active_fd_set);
+
+      // Decrement user
+      serv->nb_users--;
+      serv->client[index].active = 0;
+      serv->client[index].client_socket = -1;
+
+      // Print number of users
+      fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+    }
+  else
+    {
+      // Copy info from buff
+      memcpy(&(serv->client[index].machine_info), &machine_buff, sizeof(machine_info_t));
+    }
+}
+
 static void server_accept(const int listen_sock, const int max_users)
 {
   fd_set active_fd_set, read_fd_set;
@@ -206,131 +322,32 @@ static void server_accept(const int listen_sock, const int max_users)
 
       // Handle all client
       for (int i = 0; i < FD_SETSIZE; i++)
-        if (FD_ISSET(i, &read_fd_set))
-          {
-            if (i == listen_sock)
-              {
-                // Event of listen socket
-                struct sockaddr_in client_info;
-                unsigned int addr_size = sizeof(struct sockaddr_in);
-                int client_socket = accept(listen_sock, (struct sockaddr *)&client_info, &addr_size);
+        {
+          if (FD_ISSET(i, &read_fd_set))
+            {
+              if (i == listen_sock)
+                {
+                  server_select_client(serv, listen_sock, i, &active_fd_set);
+                }
+              else
+                {
+                  server_handle_read(serv, i, &active_fd_set);
+                }
+            }
+        }
 
-                if (client_socket < 0)
-                  {
-                    perror("accept");
-                    exit(EXIT_FAILURE);
-                  }
-
-                // To test
-                if (FD_ISSET(client_socket, &active_fd_set))
-                  {
-                    fprintf(stderr, "Client already connected %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
-                    close(client_socket);
-                    continue;
-                  }
-
-                // Test if we have place for new user
-                if (serv->nb_users >= max_users)
-                  {
-                    fprintf(stderr, "Error: a user try to connect but we are full %d/%d users\n", serv->nb_users, serv->max_users);
-                    close(client_socket);
-                    continue;
-                  }
-                else // If we have place for new user
-                  {
-                    // Search place
-                    int index = search_place(serv);
-
-                    if (index == -1)
-                      {
-                        fprintf(stderr, "Error: canno't find place\n");
-                        exit(EXIT_FAILURE);
-                      }
-
-                    // Fill structure
-                    serv->client[index].id = index;
-                    serv->client[index].active = 1;
-                    serv->client[index].client_socket = client_socket;
-                    memcpy(&(serv->client[index].info), &client_info, sizeof(struct sockaddr_in));
-                  }
-
-                // Print deconnection message
-                fprintf(stderr, "New connection from %s:%d\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
-
-                // Adding new client socket
-                FD_SET(client_socket, &active_fd_set);
-
-                // Increment user
-                serv->nb_users++;
-
-                // Print number of users
-                fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
-              }
-            else
-              {
-                // Search
-                int index = search_socket(serv, i);
-
-                if (index == -1)
-                  {
-                    fprintf(stderr, "Error: canno't find socket\n");
-                    exit(EXIT_FAILURE);
-                  }
-
-                // Handle
-                machine_info_t machine_buff;
-                int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
-
-                if (nbytes == -1)
-                  {
-                    // Print deconnection message
-                    fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
-
-                    // Deconnect
-                    close(i);
-                    FD_CLR(i, &active_fd_set);
-
-                    // Decrement user
-                    serv->nb_users--;
-                    serv->client[index].active = 0;
-                    serv->client[index].client_socket = -1;
-
-                    // Print number of users
-                    fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
-                  }
-                else
-                  {
-                    // Copy info from buff
-                    memcpy(&(serv->client[index].machine_info), &machine_buff, sizeof(machine_info_t));
-                  }
-              }
-
-            // Send message of all active socket (~ all client)
-            for (int i = 0; i < serv->max_users; i++)
-              {
-                if (serv->client[i].active)
-                  {
-                    safe_write(serv->client[i].client_socket, serv, sizeof(server_t));
-                  }
-              }
-          }
+      // Send message of all active socket (~ all client)
+      for (int i = 0; i < serv->max_users; i++)
+        {
+          if (serv->client[i].active)
+            {
+              safe_write(serv->client[i].client_socket, serv, sizeof(server_t));
+            }
+        }
     }
 
   // Deconnected all client
-  for (int i = 0; i < serv->max_users; i++)
-    {
-      if (serv->client[i].active)
-        {
-          // Deconnect
-          close(serv->client[i].client_socket);
-          FD_CLR(i, &active_fd_set);
-
-          // Decrement user
-          serv->nb_users--;
-          serv->client[i].active = 0;
-          serv->client[i].client_socket = -1;
-        }
-    }
+  server_deconnect_client(serv, active_fd_set);
   
   // Clean
   destroy_server(serv);
