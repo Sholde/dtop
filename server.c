@@ -15,58 +15,12 @@
 #include <arpa/inet.h>
 
 #include "server.h"
+#include "io.h"
 
-ssize_t safe_write(int fd, void *buff,  size_t size)
-{
-        size_t written = 0;
-        while( (size - written) != 0 )
-        {
-                errno = 0;
-                ssize_t ret = write(fd, buff + written, size-written);
-
-                if( ret < 0 )
-                {
-                        if(errno == EINTR)
-                        {
-                                continue;
-                        }
-
-                        perror("write");
-                        return ret;
-                }
-
-                written += ret;
-        }
-
-        return 0;
-}
-
-int read_from_client ( int filedes )
-{
-        char buffer[512];
-        int nbytes;
-        nbytes = read ( filedes, buffer, 512 );
-
-        if ( nbytes < 0 )
-        {
-                /* Read error. */
-                perror ( "read" );
-                exit ( EXIT_FAILURE );
-        }
-        else if ( nbytes == 0 )
-        {
-                return -1;
-        }
-        else
-        {
-                safe_write(filedes, buffer, nbytes);
-                return 0;
-        }
-}
-
-static void handle_client_socket(server_t *serv)
+static void handle_client_socket(server_t *serv, int sock, int index)
 {
   // read from client
+  //  read(sock, serv->client[index].machine_info, sizeof(machine_info_t));
 }
 
 static server_t *init_server(const int max_users)
@@ -79,14 +33,6 @@ static server_t *init_server(const int max_users)
       exit(EXIT_FAILURE);
     }
   
-  serv->client = malloc(sizeof(client_info_t) * max_users);
-  
-  if (!serv->client)
-    {
-      fprintf(stderr, "Error: canno't allocate memory\n");
-      exit(EXIT_FAILURE);
-    }
-
   serv->nb_users = 0;
   serv->max_users = max_users;
 
@@ -95,8 +41,6 @@ static server_t *init_server(const int max_users)
       serv->client[i].id = -1;
       serv->client[i].active = 0;
       serv->client[i].client_socket = -1;
-      serv->client[i].info = NULL;
-      serv->client[i].machine_info = NULL;
     }
 
   return serv;
@@ -104,7 +48,6 @@ static server_t *init_server(const int max_users)
 
 static void destroy_server(server_t *serv)
 {
-  free(serv->client);
   free(serv);
 }
 
@@ -142,7 +85,7 @@ static void server_check_argument(const int ipv, const int max_users)
       exit(1);
     }
 
-  if (max_users < 0)
+  if (max_users < 0 || max_users >= MAX_CLIENT)
     {
       fprintf(stderr, "Error: bad number of max users %d\n", max_users);
       exit(1);
@@ -297,7 +240,7 @@ static void server_accept(const int listen_sock, const int max_users)
                     serv->client[index].id = index;
                     serv->client[index].active = 1;
                     serv->client[index].client_socket = client_socket;
-                    serv->client[index].info = &client_info;
+                    memcpy(&(serv->client[index].info), &client_info, sizeof(struct sockaddr_in));
                   }
 
                 // Print deconnection message
@@ -314,9 +257,6 @@ static void server_accept(const int listen_sock, const int max_users)
               }
             else
               {
-                // Handle
-                handle_client_socket(serv);
-
                 // Search
                 int index = search_socket(serv, i);
 
@@ -326,19 +266,46 @@ static void server_accept(const int listen_sock, const int max_users)
                     exit(EXIT_FAILURE);
                   }
 
-                // Print deconnection message
-                fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info->sin_addr), ntohs(serv->client[index].info->sin_port));
+                // Handle
+                machine_info_t machine_buff;
+                int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
 
-                // Deconnect
-                close(i);
-                FD_CLR(i, &active_fd_set);
+                if (nbytes < 0)
+                  {
+                    perror("read");
+                    exit(EXIT_FAILURE);
+                  }
+                else if (nbytes == -1)
+                  {
+                    // Print deconnection message
+                    fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
 
-                // Decrement user
-                serv->nb_users--;
-                serv->client[index].active = 0;
+                    // Deconnect
+                    close(i);
+                    FD_CLR(i, &active_fd_set);
 
-                // Print number of users
-                fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+                    // Decrement user
+                    serv->nb_users--;
+                    serv->client[index].active = 0;
+                    serv->client[index].client_socket = -1;
+
+                    // Print number of users
+                    fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+                  }
+                else
+                  {
+                    // Copy info from buff
+                    memcpy(&(serv->client[index].machine_info), &machine_buff, sizeof(machine_info_t));
+                  }
+              }
+
+            // Send message of all active socket (~ all client)
+            for (int i = 0; i < serv->max_users; i++)
+              {
+                if (serv->client[i].active)
+                  {
+                    safe_write(serv->client[i].client_socket, serv, sizeof(server_t));
+                  }
               }
           }
         }
