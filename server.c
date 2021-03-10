@@ -4,6 +4,7 @@
 #include <unistd.h>  // close
 #include <pthread.h> // pthread
 #include <errno.h>   // errno
+#include <signal.h>  // signal
 
 // getaddrinfo
 #include <sys/types.h>
@@ -16,6 +17,8 @@
 
 #include "server.h"
 #include "io.h"
+
+int stop_server = 0;
 
 static void handle_client_socket(server_t *serv, int sock, int index)
 {
@@ -182,7 +185,7 @@ static void server_accept(const int listen_sock, const int max_users)
   
   server_t *serv = init_server(max_users);
 
-  while (1) /* infinite loop */
+  while (!stop_server) /* infinite loop */
     {
       read_fd_set = active_fd_set;
 
@@ -270,12 +273,7 @@ static void server_accept(const int listen_sock, const int max_users)
                 machine_info_t machine_buff;
                 int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
 
-                if (nbytes < 0)
-                  {
-                    perror("read");
-                    exit(EXIT_FAILURE);
-                  }
-                else if (nbytes == -1)
+                if (nbytes == -1)
                   {
                     // Print deconnection message
                     fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
@@ -308,17 +306,35 @@ static void server_accept(const int listen_sock, const int max_users)
                   }
               }
           }
-        }
+    }
 
+  // Deconnected all client
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      if (serv->client[i].active)
+        {
+          // Deconnect
+          close(serv->client[i].client_socket);
+          FD_CLR(i, &active_fd_set);
+
+          // Decrement user
+          serv->nb_users--;
+          serv->client[i].active = 0;
+          serv->client[i].client_socket = -1;
+        }
+    }
+  
   // Clean
   destroy_server(serv);
+
+  fprintf(stderr, "Server stop\n");
 }
 
 void server(int ipv, char *port, int max_users)
 {
   // Check argument
   server_check_argument(ipv, max_users);
-  
+
   // Bind
   int listen_sock = server_bind(ipv, port);
               
