@@ -4,6 +4,7 @@
 #include <unistd.h>  // close
 #include <pthread.h> // pthread
 #include <errno.h>   // errno
+#include <signal.h>  // signal
 
 // getaddrinfo
 #include <sys/types.h>
@@ -17,11 +18,7 @@
 #include "server.h"
 #include "io.h"
 
-static void handle_client_socket(server_t *serv, int sock, int index)
-{
-  // read from client
-  //  read(sock, serv->client[index].machine_info, sizeof(machine_info_t));
-}
+int stop_server = 0;
 
 static server_t *init_server(const int max_users)
 {
@@ -173,6 +170,12 @@ static void server_listen(const int listen_sock, const int max_users)
     }
 }
 
+static void handle_stop(int sig)
+{
+  stop_server = 1;
+  printf("\n");
+}
+
 static void server_accept(const int listen_sock, const int max_users)
 {
   fd_set active_fd_set, read_fd_set;
@@ -182,15 +185,23 @@ static void server_accept(const int listen_sock, const int max_users)
   
   server_t *serv = init_server(max_users);
 
-  while (1) /* infinite loop */
+  while (!stop_server) /* infinite loop */
     {
       read_fd_set = active_fd_set;
 
       // Block until data arrive on one or more socket
-      if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL ) < 0 )
+      if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL ) < 0)
         {
-          perror("select");
-          exit(EXIT_FAILURE);
+          if (!stop_server)
+            {
+              perror("select");
+              exit(EXIT_FAILURE);
+            }
+          else
+            {
+              // Case we have teminate server with a sigint signal
+              break;
+            }
         }
 
       // Handle all client
@@ -270,12 +281,7 @@ static void server_accept(const int listen_sock, const int max_users)
                 machine_info_t machine_buff;
                 int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
 
-                if (nbytes < 0)
-                  {
-                    perror("read");
-                    exit(EXIT_FAILURE);
-                  }
-                else if (nbytes == -1)
+                if (nbytes == -1)
                   {
                     // Print deconnection message
                     fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
@@ -308,17 +314,38 @@ static void server_accept(const int listen_sock, const int max_users)
                   }
               }
           }
-        }
+    }
 
+  // Deconnected all client
+  for (int i = 0; i < serv->max_users; i++)
+    {
+      if (serv->client[i].active)
+        {
+          // Deconnect
+          close(serv->client[i].client_socket);
+          FD_CLR(i, &active_fd_set);
+
+          // Decrement user
+          serv->nb_users--;
+          serv->client[i].active = 0;
+          serv->client[i].client_socket = -1;
+        }
+    }
+  
   // Clean
   destroy_server(serv);
+
+  fprintf(stderr, "Server stop\n");
 }
 
 void server(int ipv, char *port, int max_users)
 {
   // Check argument
   server_check_argument(ipv, max_users);
-  
+
+  // Handle signal
+  signal(SIGINT, handle_stop);
+
   // Bind
   int listen_sock = server_bind(ipv, port);
               

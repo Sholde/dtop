@@ -3,6 +3,7 @@
 #include <string.h> // memset
 #include <unistd.h> // close
 #include <errno.h>  // errno
+#include <signal.h> // signal
 
 // getaddrinfo
 #include <sys/types.h>
@@ -16,12 +17,14 @@
 #include "client.h"
 #include "io.h"
 
+int stop_client = 0;
+
 static void handle_standard(int sock)
 {
   machine_info_t *m = NULL;
   server_t serv;
   
-  while (1)
+  while (!stop_client)
     {
       m = sensor();
 
@@ -46,6 +49,11 @@ static void handle_standard(int sock)
             display(&(serv.client[i].machine_info));
         }
     }
+}
+
+static void handle_stop(int sig)
+{
+  stop_client = 1;
 }
 
 static void handle_interactif(int sock)
@@ -147,6 +155,9 @@ void client(int ipv, enum mode_client mode, char *ip, char *port)
 {
   // Checking argument
   client_check_arg(ipv, mode);
+
+  // Handle stop
+  signal(SIGINT, handle_stop);
 
   // Connect
   int sock = client_connect(ipv, ip, port);
