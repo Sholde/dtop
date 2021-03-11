@@ -241,7 +241,8 @@ static void server_select_client(server_t *serv, int listen_sock, int i, fd_set 
   // Test if we have place for new user
   if (serv->nb_users >= serv->max_users)
     {
-      fprintf(stderr, "Error: a user try to connect but we are full %d/%d users\n", serv->nb_users, serv->max_users);
+      fprintf(stderr, "Server: user %s:%d try to connect but we are full %d/%d users\n",
+              inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port), serv->nb_users, serv->max_users);
       close(client_socket);
       return;
     }
