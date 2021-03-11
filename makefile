@@ -20,9 +20,9 @@ sensor.o: sensor.c sensor.h struct.h
 
 display.o: display.c display.h struct.h
 
-server.o: server.c server.h io.c io.h
+server.o: server.c server.h io.c io.h struct.h
 
-client.o: client.c client.h server.h io.c io.h
+client.o: client.c client.h server.h io.c io.h struct.h
 
 io.o: io.c io.h
 

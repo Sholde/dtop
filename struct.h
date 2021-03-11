@@ -8,7 +8,7 @@
                     PROC_FILLGRP | PROC_FILLSTAT | PROC_FILLSTATUS |            \
                     PROC_EDITCMDLCVT)
 
-#define MAX_PROCESS 250
+#define MAX_PROCESS 300
 
 // Structure
 typedef struct machine_info_s

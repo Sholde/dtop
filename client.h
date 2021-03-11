@@ -7,6 +7,12 @@ enum mode_client
     INTERACTIF
   };
 
+typedef struct message_client_s
+{
+  int deconnect;
+  machine_info_t machine;
+} message_client_t;
+  
 void client(int, enum mode_client, char *, char *);
 
 #endif

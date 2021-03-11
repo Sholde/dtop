@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 
 #include "server.h"
+#include "client.h"
 #include "io.h"
 
 int stop_server = 0;
@@ -176,15 +177,18 @@ static void handle_stop(int sig)
   printf("\n");
 }
 
-static void server_deconnect_client(server_t *serv, fd_set active_fd_set)
+static void server_deconnect_all_client(server_t *serv, fd_set *active_fd_set)
 {
+  int fd = 0;
+  
   for (int i = 0; i < serv->max_users; i++)
     {
       if (serv->client[i].active)
         {
           // Deconnect
-          close(serv->client[i].client_socket);
-          FD_CLR(i, &active_fd_set);
+          fd = serv->client[i].client_socket;
+          close(fd);
+          FD_CLR(fd, active_fd_set);
 
           // Decrement user
           serv->nb_users--;
@@ -192,6 +196,25 @@ static void server_deconnect_client(server_t *serv, fd_set active_fd_set)
           serv->client[i].client_socket = -1;
         }
     }
+}
+
+static void server_deconnect_client(server_t *serv, int index, fd_set *active_fd_set)
+{
+  // Print deconnection message
+  fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
+
+  // Deconnect
+  int fd = serv->client[index].client_socket;
+  close(fd);
+  FD_CLR(fd, active_fd_set);
+
+  // Decrement user
+  serv->nb_users--;
+  serv->client[index].active = 0;
+  serv->client[index].client_socket = -1;
+
+  // Print number of users
+  fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
 }
 
 static void server_select_client(server_t *serv, int listen_sock, int i, fd_set *active_fd_set)
@@ -253,10 +276,12 @@ static void server_select_client(server_t *serv, int listen_sock, int i, fd_set 
   fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
 }
 
-static inline void server_handle_read(server_t *serv, int i, fd_set *active_fd_set)
+static inline void server_handle_read(message_client_t *msg_client,
+                                      server_t *serv, int fd, fd_set *active_fd_set,
+                                      int tab_of_deconnect_sock[])
 {
   // Search
-  int index = search_socket(serv, i);
+  int index = search_socket(serv, fd);
 
   if (index == -1)
     {
@@ -265,30 +290,21 @@ static inline void server_handle_read(server_t *serv, int i, fd_set *active_fd_s
     }
 
   // Handle
-  machine_info_t machine_buff;
-  int nbytes = safe_read(i, &machine_buff, sizeof(machine_info_t));
+  int nbytes = safe_read(fd, msg_client, sizeof(message_client_t));
 
   if (nbytes == -1)
     {
-      // Print deconnection message
-      fprintf(stderr, "Deconnection from %s:%d\n", inet_ntoa(serv->client[index].info.sin_addr), ntohs(serv->client[index].info.sin_port));
-
-      // Deconnect
-      close(i);
-      FD_CLR(i, active_fd_set);
-
-      // Decrement user
-      serv->nb_users--;
-      serv->client[index].active = 0;
-      serv->client[index].client_socket = -1;
-
-      // Print number of users
-      fprintf(stderr, "We are now %d/%d users\n", serv->nb_users, serv->max_users);
+      server_deconnect_client(serv, fd, active_fd_set);
     }
   else
     {
+      if (msg_client->deconnect)
+        {
+          tab_of_deconnect_sock[index] = 1;
+        }
+      
       // Copy info from buff
-      memcpy(&(serv->client[index].machine_info), &machine_buff, sizeof(machine_info_t));
+      memcpy(&(serv->client[index].machine_info), &(msg_client->machine), sizeof(machine_info_t));
     }
 }
 
@@ -298,11 +314,27 @@ static void server_accept(const int listen_sock, const int max_users)
   /* Initialize the set of active sockets */
   FD_ZERO(&active_fd_set);
   FD_SET(listen_sock, &active_fd_set);
+
+  int tab_of_deconnect_sock[MAX_CLIENT] = { 0 };
   
   server_t *serv = init_server(max_users);
 
+  message_client_t msg_client;
+  message_server_t msg_server;
+
   while (!stop_server) /* infinite loop */
     {
+      // Deconnect socket
+      for (int i = 0; i < MAX_CLIENT; i++)
+        {
+          if (tab_of_deconnect_sock[i])
+            {
+              server_deconnect_client(serv, i, &active_fd_set);
+              tab_of_deconnect_sock[i] = 0;
+            }
+        }
+      
+      // Set reading sock
       read_fd_set = active_fd_set;
 
       // Block until data arrive on one or more socket
@@ -331,7 +363,7 @@ static void server_accept(const int listen_sock, const int max_users)
                 }
               else
                 {
-                  server_handle_read(serv, i, &active_fd_set);
+                  server_handle_read(&msg_client, serv, i, &active_fd_set, tab_of_deconnect_sock);
                 }
             }
         }
@@ -341,13 +373,29 @@ static void server_accept(const int listen_sock, const int max_users)
         {
           if (serv->client[i].active)
             {
-              safe_write(serv->client[i].client_socket, serv, sizeof(server_t));
+              if (tab_of_deconnect_sock[i])
+                {
+                  msg_server.deconnect = 1;
+                }
+              else
+                {
+                  msg_server.deconnect = 0;
+                }
+              
+              memcpy(&(msg_server.serv), serv, sizeof(server_t));
+              
+              int nbytes = safe_write(serv->client[i].client_socket, &msg_server, sizeof(message_server_t));
+
+              if (nbytes == -1)
+                {
+                  server_deconnect_client(serv, i, &active_fd_set);
+                }
             }
         }
     }
 
   // Deconnected all client
-  server_deconnect_client(serv, active_fd_set);
+  server_deconnect_all_client(serv, &active_fd_set);
   
   // Clean
   destroy_server(serv);
