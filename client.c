@@ -23,37 +23,46 @@ static void handle_standard(int sock)
 {
   int refresh_counter = 0;
   machine_info_t *m = NULL;
-  server_t serv;
+  message_client_t msg_client;
+  message_server_t msg_server;
   
-  while (!stop_client)
+  while (1)
     {
       refresh_counter++;
 
       // monitoring
       m = sensor();
 
-      // write on fd m
-      safe_write(sock, m, sizeof(machine_info_t));
+      msg_client.deconnect = stop_client;
+      memcpy(&(msg_client.machine), m, sizeof(machine_info_t));
       free(m);
+      
+      // write on fd m
+      safe_write(sock, &msg_client, sizeof(message_client_t));
       
       // read on fd serv
       int nbytes = 0;
 
-      nbytes = safe_read(sock, &serv, sizeof(server_t));
+      nbytes = safe_read(sock, &msg_server, sizeof(message_server_t));
 
       if (nbytes == -1)
         {
           exit(EXIT_FAILURE);
         }
 
+      if (msg_server.deconnect)
+        {
+          break;
+        }
+
       // display
       printf("\n");
       printf("Refresh: %d\n", refresh_counter);
       
-      for (int i = 0; i < serv.max_users; i++)
+      for (int i = 0; i < msg_server.serv.max_users; i++)
         {
-          if (serv.client[i].active)
-            display(&(serv.client[i].machine_info));
+          if (msg_server.serv.client[i].active)
+            display(&(msg_server.serv.client[i].machine_info));
         }
     }
 }

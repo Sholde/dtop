@@ -25,6 +25,12 @@ typedef struct server_s
   client_info_t client[MAX_CLIENT];
 } server_t;
 
+typedef struct message_server_s
+{
+  int deconnect;
+  server_t serv;
+} message_server_t;
+
 void server(int, char *, int);
 
 #endif
