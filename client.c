@@ -5,6 +5,10 @@
 #include <errno.h>  // errno
 #include <signal.h> // signal
 
+// open
+#include <sys/stat.h>
+#include <fcntl.h>
+
 // getaddrinfo
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -20,6 +24,60 @@
 int stop_client = 0;
 
 static void handle_standard(int sock)
+{
+  message_client_t msg_client;
+  message_server_t msg_server;
+
+  int ret = 0;
+    
+  // monitoring
+  machine_info_t *m = sensor();
+
+  // First time server don't update, i don't know why...
+  for (int i = 0; i < 2; i++)
+    {
+      msg_client.deconnect = stop_client;
+      memcpy(&(msg_client.machine), m, sizeof(machine_info_t));
+      
+      // write on fd m
+      safe_write(sock, &msg_client, sizeof(message_client_t));
+      
+      // read on fd serv
+      ret = safe_read(sock, &msg_server, sizeof(message_server_t));
+
+      if (ret == -1 || msg_server.deconnect)
+        {
+          return;
+        }
+    }
+
+  // free monitoring
+  free(m);
+
+  // display
+  for (int i = 0; i < msg_server.serv.max_users; i++)
+    {
+      if (msg_server.serv.client[i].active)
+        display(&(msg_server.serv.client[i].machine_info));
+    }
+
+  // Stoping client
+  while (1)
+    {
+      stop_client = 1;
+      msg_client.deconnect = stop_client;
+  
+      safe_write(sock, &msg_client, sizeof(message_client_t));
+      ret = safe_read(sock, &msg_server, sizeof(message_server_t));
+
+      if (ret == -1 || msg_server.deconnect)
+        {
+          break;
+        }
+    }
+}
+
+static void handle_loop(int sock)
 {
   int refresh_counter = 0;
   machine_info_t *m = NULL;
@@ -41,16 +99,9 @@ static void handle_standard(int sock)
       safe_write(sock, &msg_client, sizeof(message_client_t));
       
       // read on fd serv
-      int nbytes = 0;
+      int ret = safe_read(sock, &msg_server, sizeof(message_server_t));
 
-      nbytes = safe_read(sock, &msg_server, sizeof(message_server_t));
-
-      if (nbytes == -1)
-        {
-          exit(EXIT_FAILURE);
-        }
-
-      if (msg_server.deconnect)
+      if (ret == -1 || msg_server.deconnect)
         {
           break;
         }
@@ -67,20 +118,24 @@ static void handle_standard(int sock)
     }
 }
 
+static void handle_file(int sock, char *path)
+{
+  // Redirect printf
+  int fd = open(path, O_CREAT | O_WRONLY, 0666);
+  dup2(fd, STDOUT_FILENO);
+
+  handle_standard(sock);
+
+  close(fd);
+}
+
 static void handle_stop(int sig)
 {
+  printf("call\n");
   stop_client = 1;
 }
 
-static void handle_interactif(int sock)
-{
-  fprintf(stderr, "Not yet implemented!\n");
-  machine_info_t *m = sensor();
-  display(m);
-  free(m);
-}
-
-static void client_check_arg(int ipv, enum mode_client mode)
+static void client_check_arg(int ipv, enum mode_client mode, char *path)
 {
   // IP version
   if (ipv != 4 && ipv != 6)
@@ -90,7 +145,13 @@ static void client_check_arg(int ipv, enum mode_client mode)
     }
 
   // mode
-  if (mode != INTERACTIF && mode != STANDARD)
+  if (mode != OUTPUT_FILE && mode != STANDARD && mode != LOOP)
+    {
+      fprintf(stderr, "Error: bad mode\n");
+      exit(EXIT_FAILURE);
+    }
+
+  if (mode == OUTPUT_FILE && !path)
     {
       fprintf(stderr, "Error: bad mode\n");
       exit(EXIT_FAILURE);
@@ -167,13 +228,10 @@ static int client_connect(const int ipv, const char *ip, const char *port)
   return sock;
 }
 
-void client(int ipv, enum mode_client mode, char *ip, char *port)
+void client(int ipv, enum mode_client mode, char *ip, char *port, char *path)
 {
   // Checking argument
-  client_check_arg(ipv, mode);
-
-  // Handle stop
-  signal(SIGINT, handle_stop);
+  client_check_arg(ipv, mode, path);
 
   // Connect
   int sock = client_connect(ipv, ip, port);
@@ -185,8 +243,15 @@ void client(int ipv, enum mode_client mode, char *ip, char *port)
       handle_standard(sock);
       break;
       
-    case INTERACTIF:
-      handle_interactif(sock);
+    case LOOP:
+      // Handle stop
+      signal(SIGINT, handle_stop);
+
+      handle_loop(sock);
+      break;
+      
+    case OUTPUT_FILE:
+      handle_file(sock, path);
       break;
       
     default:
@@ -200,3 +265,5 @@ void client(int ipv, enum mode_client mode, char *ip, char *port)
 
   close(sock);
 }
+
+

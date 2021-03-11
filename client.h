@@ -4,7 +4,8 @@
 enum mode_client
   {
     STANDARD,
-    INTERACTIF
+    OUTPUT_FILE,
+    LOOP
   };
 
 typedef struct message_client_s
@@ -13,6 +14,6 @@ typedef struct message_client_s
   machine_info_t machine;
 } message_client_t;
   
-void client(int, enum mode_client, char *, char *);
+void client(int, enum mode_client, char *, char *, char *);
 
 #endif

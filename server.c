@@ -39,6 +39,7 @@ static server_t *init_server(const int max_users)
       serv->client[i].id = -1;
       serv->client[i].active = 0;
       serv->client[i].client_socket = -1;
+      memset(&(serv->client[i].machine_info), 0, sizeof(machine_info_t));
     }
 
   return serv;
@@ -291,9 +292,9 @@ static inline void server_handle_read(message_client_t *msg_client,
     }
 
   // Handle
-  int nbytes = safe_read(fd, msg_client, sizeof(message_client_t));
+  int ret = safe_read(fd, msg_client, sizeof(message_client_t));
 
-  if (nbytes == -1)
+  if (ret == -1)
     {
       server_deconnect_client(serv, fd, active_fd_set);
     }
@@ -385,9 +386,9 @@ static void server_accept(const int listen_sock, const int max_users)
               
               memcpy(&(msg_server.serv), serv, sizeof(server_t));
               
-              int nbytes = safe_write(serv->client[i].client_socket, &msg_server, sizeof(message_server_t));
+              int ret = safe_write(serv->client[i].client_socket, &msg_server, sizeof(message_server_t));
 
-              if (nbytes == -1)
+              if (ret == -1)
                 {
                   server_deconnect_client(serv, i, &active_fd_set);
                 }

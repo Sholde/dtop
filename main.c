@@ -22,38 +22,41 @@ void print_help(int argc, char **argv)
 
   // Server
   printf(BOLD "  SERVER:\n" RESET);
-  printf(BOLD "    -s           " RESET " use such server\n");
-  printf(BOLD "    -p <port>    " RESET " select a port\n");
-  printf(BOLD "    -u <number>  " RESET " select the number of max users in server\n");
-  printf(BOLD "    -4           " RESET " use only ipv4\n");
-  printf(BOLD "    -6           " RESET " use only ipv6\n");
+  printf(BOLD "    -s              " RESET " use such server\n");
+  printf(BOLD "    -p <port>       " RESET " select a port\n");
+  printf(BOLD "    -u <number>     " RESET " select the number of max users in server\n");
+  printf(BOLD "    -4              " RESET " use only ipv4\n");
+  printf(BOLD "    -6              " RESET " use only ipv6\n");
+  printf(BOLD "  Close server with ctrl+c\n" RESET);
 
   printf("\n");
 
   // Client
   printf(BOLD "  CLIENT:\n" RESET);
-  printf(BOLD "    -c           " RESET " use such client\n");
-  printf(BOLD "    -o <filename>" RESET " redirect output in the given file\n");
-  printf(BOLD "    -n           " RESET " select interactif output (with ncurse)\n");
-  printf(BOLD "    -i <ip>      " RESET " select the ip address of server\n");
-  printf(BOLD "    -p <port>    " RESET " select the port of server\n");
-  printf(BOLD "    -4           " RESET " use only ipv4\n");
-  printf(BOLD "    -6           " RESET " use only ipv6\n");
+  printf(BOLD "    -c              " RESET " use such client\n");
+  printf(BOLD "    -o <filename>   " RESET " redirect output in the given file\n");
+  printf(BOLD "    -l              " RESET " select loop mode (print in stdout)\n");
+  printf(BOLD "    -n <path of lib>" RESET " select interactif mode\n");
+  printf(BOLD "    -i <ip>         " RESET " select the ip address of server\n");
+  printf(BOLD "    -p <port>       " RESET " select the port of server\n");
+  printf(BOLD "    -4              " RESET " use only ipv4\n");
+  printf(BOLD "    -6              " RESET " use only ipv6\n");
+  printf(BOLD "  Close client with ctrl+c\n" RESET);
 }
 
 void handle_client(int argc, char **argv)
 {
   // Declare varible
   int opt = 0;
-  int fd = -1;
   int ipv = -1;
   char *ip = NULL;
   char *port = NULL;
+  char *path = NULL;
   int mode = 0;
   int error = 0;
 
   // Parse argument
-  while ((opt = getopt(argc, argv, "046ni:p:o:")) != -1)
+  while ((opt = getopt(argc, argv, "046lni:p:o:")) != -1)
     {
       switch (opt)
         {
@@ -62,10 +65,9 @@ void handle_client(int argc, char **argv)
           ipv = opt - '0';
           break;
           
-        case 'o': /* output */
-          // Redirect printf
-          fd = open(optarg, O_CREAT | O_WRONLY, 0666);
-          dup2(fd, STDOUT_FILENO);
+        case 'o': /* file output */
+          mode = 2;
+          path = optarg;
           break;
 
         case 'i': /* ip */
@@ -76,8 +78,12 @@ void handle_client(int argc, char **argv)
           port = optarg;
           break;
           
-        case 'n': /* intercatif */
+        case 'l': /* loop */
           mode = 1;
+          break;
+
+        case 'n': /* intercatif */
+          mode = 3;
           break;
 
         default: /* print */
@@ -106,24 +112,34 @@ void handle_client(int argc, char **argv)
       error = 1;
     }
 
+  if (mode == 2 && !path)
+    {
+      fprintf(stderr, "Error: expected path of file after option -o\n");
+      error = 1;
+    }
+
   if (error)
     {
       exit(EXIT_FAILURE);
     }
   
   // Select mode
-  if (mode)
+  if (mode == 3)
     {
-      client(ipv, INTERACTIF, ip, port);
+      client(ipv, STANDARD, ip, port, path);
+    }
+  else if (mode == 2)
+    {
+      client(ipv, OUTPUT_FILE, ip, port, path);
+    }
+  else if (mode == 1)
+    {
+      client(ipv, LOOP, ip, port, path);
     }
   else
     {
-      client(ipv, STANDARD, ip, port);
+      client(ipv, STANDARD, ip, port, path);
     }
-
-  // Close file descriptor
-  if (fd != -1)
-    close(fd);
 }
 
 void handle_server(int argc, char **argv)
