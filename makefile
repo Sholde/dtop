@@ -7,27 +7,39 @@ LFLAGS=-lprocps -lpthread
 
 ## Name
 PROG=dtop
+SRC_DIR=src
+OBJ_DIR=obj
 
 # Target
-all: $(PROG)
+all: prepare $(PROG)
 
-$(PROG): main.o sensor.o display.o server.o client.o io.o
+prepare:
+	mkdir -p $(OBJ_DIR)
+
+$(PROG): $(OBJ_DIR)/main.o $(OBJ_DIR)/sensor.o $(OBJ_DIR)/display.o            \
+	 $(OBJ_DIR)/server.o $(OBJ_DIR)/client.o $(OBJ_DIR)/io.o
 	$(CC) $(CFLAGS) $(OFLAGS) $^ -o $@ $(LFLAGS)
 
-main.o: main.c sensor.c sensor.h display.c display.h io.h struct.h
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c $(SRC_DIR)/sensor.c $(SRC_DIR)/sensor.h   \
+		   $(SRC_DIR)/display.c $(SRC_DIR)/display.h $(SRC_DIR)/io.h   \
+		   $(SRC_DIR)/struct.h
 
-sensor.o: sensor.c sensor.h struct.h
+$(OBJ_DIR)/sensor.o: $(SRC_DIR)/sensor.c $(SRC_DIR)/sensor.h $(SRC_DIR)/struct.h
 
-display.o: display.c display.h struct.h
+$(OBJ_DIR)/display.o: $(SRC_DIR)/display.c $(SRC_DIR)/display.h                \
+		      $(SRC_DIR)/struct.h
 
-server.o: server.c server.h io.c io.h struct.h
+$(OBJ_DIR)/server.o: $(SRC_DIR)/server.c $(SRC_DIR)/server.h $(SRC_DIR)/io.c   \
+		     $(SRC_DIR)/io.h $(SRC_DIR)/struct.h
 
-client.o: client.c client.h server.h io.c io.h struct.h
+$(OBJ_DIR)/client.o: $(SRC_DIR)/client.c $(SRC_DIR)/client.h                   \
+		     $(SRC_DIR)/server.h $(SRC_DIR)/io.c $(SRC_DIR)/io.h       \
+		     $(SRC_DIR)/struct.h
 
-io.o: io.c io.h
+$(OBJ_DIR)/io.o: $(SRC_DIR)/io.c $(SRC_DIR)/io.h
 
-%.o: %.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(OFLAGS) -c $< -o $@ $(LFLAGS)
 
 clean:
-	rm -Rf *~ *.o $(PROG)
+	rm -Rf *~ *.o $(PROG) $(OBJ_DIR)
