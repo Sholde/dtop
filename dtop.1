@@ -7,13 +7,13 @@
 dtop - display distributed linux process
 .SH SYNOPSIS
 .PP
-\f[B]dtop\f[R] [OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] \f[I][OPTION] [ARGUMENT]\f[R]\&...
 .PP
 \f[B]dtop\f[R] -h
 .PP
-\f[B]dtop\f[R] -s [OPTION] [SERVER OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] -s \f[I][OPTION] [SERVER OPTION] [ARGUMENT]\f[R]\&...
 .PP
-\f[B]dtop\f[R] -c [OPTION] [CLIENT OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] -c \f[I][OPTION] [CLIENT OPTION] [ARGUMENT]\f[R]\&...
 .SH DESCRIPTION
 .PP
 \f[B]dtop\f[R] is a distributed top tool.
@@ -26,54 +26,67 @@ It allows user to create server and to connect on a server.
 Display a friendly help message.
 .TP
 \f[B]-s\f[R]
-Create a server.
+Create a \f[I]server\f[R].
 .TP
 \f[B]-c\f[R]
-Create a client.
+Create a \f[I]client\f[R].
 .TP
 \f[B]-4\f[R]
-Using only ipv4.
+Using only \f[I]IPv4\f[R].
 .TP
 \f[B]-6\f[R]
-Using only ipv6.
+Using only \f[I]IPv6\f[R].
 .SS SERVER OPTIONS
 .TP
-\f[B]-u\f[R]
-Select the max number of user.
+\f[B]-u\f[R] \f[I]number\f[R]
+Select the \f[I]max\f[R] number of \f[I]users\f[R].
 .TP
-\f[B]-p\f[R]
-Select the port of the server.
+\f[B]-p\f[R] \f[I]port\f[R]
+Select the \f[I]port\f[R] of the server.
 .SS CLIENT OPTIONS
 .TP
-\f[B]-i\f[R]
-connection to the server on the fiven ip.
+\f[B]-i\f[R] \f[I]ip\f[R]
+connection to the server with the given \f[I]ip\f[R].
 .TP
-\f[B]-p\f[R]
-connection to the server on the given port.
+\f[B]-p\f[R] \f[I]port\f[R]
+connection to the server with the given \f[I]port\f[R].
+.TP
+\f[B]-o\f[R] \f[I]file\f[R]
+redirect output in the given \f[I]file\f[R].
+.TP
+\f[B]-l\f[R]
+run loop instead of print oune execution like \f[B]ps\f[R].
+Need a \f[B]ctrl+c\f[R] to stop (or \f[B]SIGINT\f[R]).
 .SH EXAMPLES
 .TP
 \f[B]dtop -h\f[R]
 Displays help.
 .TP
-\f[B]dtop -s -4 -u 10 -p 8080\f[R]
-Create a server using only ipv4 for 10 users maximum on port 8080.
+\f[B]dtop\f[R] \f[I]-s -4 -u 10 -p 8080\f[R]
+Create a server using only \f[I]ipv4\f[R] for \f[I]10\f[R] users maximum
+on \f[I]port 8080\f[R].
 .TP
-\f[B]dtop -c -4 -i 10.0.2.15 -p 8080\f[R]
-Create a client which connect to server 10.0.2.15 on port 8080 and use
-only ipv4.
+\f[B]dtop\f[R] \f[I]-c -4 -i 10.0.2.15 -p 8080\f[R]
+Create a client which connect to server \f[I]10.0.2.15\f[R] on
+\f[I]port\f[R] \f[I]8080\f[R] and use only \f[I]ipv4\f[R].
+.TP
+\f[B]dtop\f[R] \f[I]-c -4 -i 10.0.2.15 -p 8080 -l\f[R]
+Same example as above but run client while \f[B]ctrl+c\f[R] is not press
+(or \f[B]SIGINT\f[R]).
 .SH AUTHORS
 .PP
-Written by Sholde and m4ssi.
+Written by \f[I]Sholde\f[R] and \f[I]m4ssi\f[R].
 .SH BUGS
 .PP
 Submit bug reports online at: <https://github.com/aisetop/dtop/issues>
 .SH SEE ALSO
 .SS SERVER - CLIENT
 .PP
-getaddrinfo(3), socket(3), bind(3), select(3), accept(3), connect(3)
+\f[I]getaddrinfo\f[R](3), \f[I]socket\f[R](3), \f[I]bind\f[R](3),
+\f[I]select\f[R](3), \f[I]accept\f[R](3), \f[I]connect\f[R](3)
 .SS SENSOR
 .PP
-\[lq]<proc/readproc.h>\[rq], readproc(3), uname(3)
+\f[I]<proc/readproc.h>\f[R], \f[I]readproc\f[R](3), \f[I]uname\f[R](3)
 .SS DISPLAY
 .PP
-printf(3)
+\f[I]printf\f[R](3)

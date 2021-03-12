@@ -12,13 +12,13 @@ dtop - display distributed linux process
 
 # SYNOPSIS
 
-**dtop** [OPTION] [ARGUMENT]...
+**dtop** *[OPTION] [ARGUMENT]*...
 
 **dtop** -h
 
-**dtop** -s [OPTION] [SERVER OPTION] [ARGUMENT]...
+**dtop** -s *[OPTION] [SERVER OPTION] [ARGUMENT]*...
 
-**dtop** -c [OPTION] [CLIENT OPTION] [ARGUMENT]...
+**dtop** -c *[OPTION] [CLIENT OPTION] [ARGUMENT]*...
 
 # DESCRIPTION
 
@@ -31,55 +31,65 @@ It allows user to create server and to connect on a server.
 : Display a friendly help message.
 
 **-s**
-: Create a server.
+: Create a *server*.
 
 **-c**
-: Create a client.
+: Create a *client*.
 
 **-4**
-: Using only ipv4.
+: Using only *IPv4*.
 
 **-6**
-: Using only ipv6.
+: Using only *IPv6*.
 
 ## SERVER OPTIONS
 
-**-u**
-: Select the max number of user.
+**-u** *number*
+: Select the *max* number of *users*.
 
-**-p**
-: Select the port of the server.
+**-p** *port*
+: Select the *port* of the server.
 
 ## CLIENT OPTIONS
 
-**-i**
-: connection to the server on the fiven ip.
+**-i** *ip*
+: connection to the server with the given *ip*.
 
-**-p**
-: connection to the server on the given port.
+**-p** *port*
+: connection to the server with the given *port*.
+
+**-o** *file*
+: redirect output in the given *file*.
+
+**-l**
+: run loop instead of print oune execution like **ps**. Need a **ctrl+c** to stop (or **SIGINT**).
 
 # EXAMPLES
+
 **dtop -h**
 : Displays help.
 
-**dtop -s -4 -u 10 -p 8080**
-: Create a server using only ipv4 for 10 users maximum on port 8080.
+**dtop** *-s -4 -u 10 -p 8080*
+: Create a server using only *ipv4* for *10* users maximum on *port 8080*.
 
-**dtop -c -4 -i 10.0.2.15 -p 8080**
-: Create a client which connect to server 10.0.2.15 on port 8080 and use only ipv4.
+**dtop** *-c -4 -i 10.0.2.15 -p 8080*
+: Create a client which connect to server *10.0.2.15* on *port* *8080* and use only *ipv4*.
+
+**dtop** *-c -4 -i 10.0.2.15 -p 8080 -l*
+: Same example as above but run client while **ctrl+c** is not press (or **SIGINT**).
 
 # AUTHORS
-Written by Sholde and m4ssi.
+Written by *Sholde* and *m4ssi*.
 
 # BUGS
 Submit bug reports online at: <https://github.com/aisetop/dtop/issues>
 
 # SEE ALSO
 ## SERVER - CLIENT
-getaddrinfo(3), socket(3), bind(3), select(3), accept(3), connect(3)
+*getaddrinfo*(3), *socket*(3), *bind*(3), *select*(3), *accept*(3), *connect*(3)
 
 ## SENSOR
-"<proc/readproc.h>", readproc(3), uname(3) 
+*<proc/readproc.h>*, *readproc*(3), *uname*(3) 
 
 ## DISPLAY
-printf(3)
+*printf*(3)
