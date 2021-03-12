@@ -5,12 +5,9 @@
 #include <fcntl.h>    // open
 #include <string.h>   // string
 
+#include "display.h"
 #include "server.h"
 #include "client.h"
-
-#define RESET "\033[0m"
-#define BOLD "\033[1m"
-#define BOLDRED "\033[1m\033[31m"
 
 void print_help(int argc, char **argv)
 {

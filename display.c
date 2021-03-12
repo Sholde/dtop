@@ -32,21 +32,30 @@ void display(machine_info_t *m)
   char *str_time = NULL;
   
   // Print info
-  printf("Machine: %s\n", m->name);
-  printf("Processor: %ld\n", m->nproc);
-  printf("Memory: %ld\n", m->mem_size);
-  printf("Process: %ld\n", m->nprocess);
-  printf("%5s" " %10s"  " %10s"  " %5s" " %5s"   " %6s" " %10s" " %10s"  " %9s"  " %s\n",
-         "TID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
+  printf(BOLD "Machine:" RESET " %s\n", m->name);
+  printf(BOLD "Processor:" RESET " %ld\n", m->nproc);
+  printf(BOLD "Memory:" RESET " %ld pages\n", m->mem_size);
+  printf(BOLD "Process:" RESET " %ld\n", m->nprocess);
+  printf(BOLD);
+  printf("%5s" " %10s"  " %10s"  " %5s" " %5s"   " %6s" " %10s" " %10s"  " %9s"  " %s\n" RESET,
+         "PID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
 
   for (int i = 0; &(m->proc_info[i]) != NULL && i < m->nprocess; i++)
     {
       // Transform time
       str_time = get_time(m->proc_info[i].utime);
 
-      printf("%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n", m->proc_info[i].tid, m->proc_info[i].ruser,
-             m->proc_info[i].rgroup, m->proc_info[i].ppid, m->proc_info[i].processor, (double)m->proc_info[i].pcpu / 100,
-             m->proc_info[i].rss, m->proc_info[i].size, str_time, m->proc_info[i].cmd);
+      printf("%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n",
+             m->proc_info[i].tid,
+             m->proc_info[i].ruser,
+             m->proc_info[i].rgroup,
+             m->proc_info[i].ppid,
+             m->proc_info[i].processor,
+             (double)m->proc_info[i].pcpu / 100,
+             m->proc_info[i].rss,
+             m->proc_info[i].size,
+             str_time,
+             m->proc_info[i].cmd);
 
       // Clean
       free(str_time);

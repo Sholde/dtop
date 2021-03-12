@@ -100,7 +100,9 @@ machine_info_t *sensor(void)
 
   m->nproc = get_nprocs();
   if (count)
-    m->mem_size = m->proc_info[0].vsize;
+    {
+      m->mem_size = m->proc_info[0].vsize;
+    }
 
   free_info(info, count);
 
