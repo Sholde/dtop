@@ -76,10 +76,10 @@ Submit bug reports online at: <https://github.com/aisetop/dtop/issues>
 
 # SEE ALSO
 ## SERVER - CLIENT
-getaddrinfo(3)
+getaddrinfo(3), socket(3), bind(3), select(3), accept(3), connect(3)
 
 ## SENSOR
-<readproc.h>
+"<proc/readproc.h>", readproc(3), uname(3) 
 
 ## DISPLAY
 printf(3)

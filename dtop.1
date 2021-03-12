@@ -7,13 +7,13 @@
 dtop - display distributed linux process
 .SH SYNOPSIS
 .PP
-// General usage \f[B]dtop\f[R] [OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] [OPTION] [ARGUMENT]\&...
 .PP
-// Help \f[B]dtop\f[R] -h
+\f[B]dtop\f[R] -h
 .PP
-// Server \f[B]dtop\f[R] -s [OPTION] [SERVER OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] -s [OPTION] [SERVER OPTION] [ARGUMENT]\&...
 .PP
-% //Client \f[B]dtop\f[R] -c [OPTION] [CLIENT OPTION] [ARGUMENT]\&...
+\f[B]dtop\f[R] -c [OPTION] [CLIENT OPTION] [ARGUMENT]\&...
 .SH DESCRIPTION
 .PP
 \f[B]dtop\f[R] is a distributed top tool.
@@ -70,10 +70,10 @@ Submit bug reports online at: <https://github.com/aisetop/dtop/issues>
 .SH SEE ALSO
 .SS SERVER - CLIENT
 .PP
-getaddrinfo(3)
+getaddrinfo(3), socket(3), bind(3), select(3), accept(3), connect(3)
 .SS SENSOR
 .PP
-<readproc.h>
+\[lq]<proc/readproc.h>\[rq], readproc(3), uname(3)
 .SS DISPLAY
 .PP
 printf(3)
