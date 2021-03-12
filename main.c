@@ -20,25 +20,24 @@ void print_help(int argc, char **argv)
 
   // Server
   printf(BOLDRED "  SERVER:\n" RESET);
-  printf(BOLD "    -s              " RESET " use such server\n");
+  printf(BOLD "    -s              " RESET " server service\n");
   printf(BOLD "    -p <port>       " RESET " select a port\n");
   printf(BOLD "    -u <number>     " RESET " select the number of max users in server\n");
-  printf(BOLD "    -4              " RESET " use only ipv4\n");
-  printf(BOLD "    -6              " RESET " use only ipv6\n");
+  printf(BOLD "    -4              " RESET " use IPv4 only\n");
+  printf(BOLD "    -6              " RESET " use IPv6 only\n");
   printf(BOLDRED "  Close server with ctrl+c\n" RESET);
 
   printf("\n");
 
   // Client
   printf(BOLDRED "  CLIENT:\n" RESET);
-  printf(BOLD "    -c              " RESET " use such client\n");
+  printf(BOLD "    -c              " RESET " client service\n");
   printf(BOLD "    -o <filename>   " RESET " redirect output in the given file\n");
   printf(BOLD "    -l              " RESET " select loop mode (print in stdout)\n");
-  printf(BOLD "    -n <path of lib>" RESET " select interactif mode\n");
   printf(BOLD "    -i <ip>         " RESET " select the ip address of server\n");
   printf(BOLD "    -p <port>       " RESET " select the port of server\n");
-  printf(BOLD "    -4              " RESET " use only ipv4\n");
-  printf(BOLD "    -6              " RESET " use only ipv6\n");
+  printf(BOLD "    -4              " RESET " use IPv4 only\n");
+  printf(BOLD "    -6              " RESET " use IPv6 only\n");
   printf(BOLDRED "  Close client with ctrl+c\n" RESET);
 }
 
