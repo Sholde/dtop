@@ -10,29 +10,30 @@
 
 #define RESET "\033[0m"
 #define BOLD "\033[1m"
+#define BOLDRED "\033[1m\033[31m"
 
 void print_help(int argc, char **argv)
 {
   // Usage
-  printf(BOLD "Usage: " RESET "%s [OPTION] [ARGUMENT]...\n", argv[0]);
-  printf(BOLD "Options:\n" RESET);
+  printf(BOLDRED "Usage: " RESET "%s [OPTION] [ARGUMENT]...\n", argv[0]);
+  printf(BOLDRED "Options:\n" RESET);
   printf(BOLD "  -h," RESET " print this help\n");
 
   printf("\n");
 
   // Server
-  printf(BOLD "  SERVER:\n" RESET);
+  printf(BOLDRED "  SERVER:\n" RESET);
   printf(BOLD "    -s              " RESET " use such server\n");
   printf(BOLD "    -p <port>       " RESET " select a port\n");
   printf(BOLD "    -u <number>     " RESET " select the number of max users in server\n");
   printf(BOLD "    -4              " RESET " use only ipv4\n");
   printf(BOLD "    -6              " RESET " use only ipv6\n");
-  printf(BOLD "  Close server with ctrl+c\n" RESET);
+  printf(BOLDRED "  Close server with ctrl+c\n" RESET);
 
   printf("\n");
 
   // Client
-  printf(BOLD "  CLIENT:\n" RESET);
+  printf(BOLDRED "  CLIENT:\n" RESET);
   printf(BOLD "    -c              " RESET " use such client\n");
   printf(BOLD "    -o <filename>   " RESET " redirect output in the given file\n");
   printf(BOLD "    -l              " RESET " select loop mode (print in stdout)\n");
@@ -41,7 +42,7 @@ void print_help(int argc, char **argv)
   printf(BOLD "    -p <port>       " RESET " select the port of server\n");
   printf(BOLD "    -4              " RESET " use only ipv4\n");
   printf(BOLD "    -6              " RESET " use only ipv6\n");
-  printf(BOLD "  Close client with ctrl+c\n" RESET);
+  printf(BOLDRED "  Close client with ctrl+c\n" RESET);
 }
 
 void handle_client(int argc, char **argv)
