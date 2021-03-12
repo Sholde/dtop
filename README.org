@@ -33,9 +33,16 @@ In project directory:
 $ ./dtop
 #+END_SRC
 
+** Man page
+
+See manpage:
+#+BEGIN_SRC bash
+$ man ./dtop.1
+#+END_SRC
+
 ** Help
 
-To print help:
+Using dtop command:
 #+BEGIN_SRC bash
 $ ./dtop -h
 #+END_SRC
@@ -47,22 +54,23 @@ Options:
   -h, print this help
 
   SERVER:
-    -s            use such server
-    -p <port>     select a port
-    -u <number>   select the number of max users in server
-    -4            use only ipv4
-    -6            use only ipv6
-    -0            use ipv4 and ipv6
+    -s               use such server
+    -p <port>        select a port
+    -u <number>      select the number of max users in server
+    -4               use only ipv4
+    -6               use only ipv6
+  Close server with ctrl+c
 
   CLIENT:
-    -c            use such client
-    -o <filename> redirect output in the given file
-    -n            select interactif output (with ncurse)
-    -i <ip>       select the ip address of server
-    -p <port>     select the port of server
-    -4            use only ipv4
-    -6            use only ipv6
-    -0            use ipv4 and ipv6
+    -c               use such client
+    -o <filename>    redirect output in the given file
+    -l               select loop mode (print in stdout)
+    -n <path of lib> select interactif mode
+    -i <ip>          select the ip address of server
+    -p <port>        select the port of server
+    -4               use only ipv4
+    -6               use only ipv6
+  Close client with ctrl+c
 #+END_SRC
 
 * List of fonctionnality
@@ -80,9 +88,9 @@ Options:
 
    | Code | Component         | Description                                | Implemented |
    |------+-------------------+--------------------------------------------+-------------|
-   | B1   | Advanced client   | don't understand                           | YES         |
+   | B1   | Advanced client   | readproc do this (info by pid)             | YES         |
    | B2   | Multi client      | select method                              | YES         |
-   | B3   | CLI               | getopt and help (man?)                     | YES         |
+   | B3   | CLI               | getopt, help and man                       | YES         |
    | B4   | Plugin            | display plugin                             | NO          |
    | B5   | Interactif        | filtered (come with ncurses support maybe) | NO          |
    | B6   | GUI               | ncurses mode                               | NO          |
