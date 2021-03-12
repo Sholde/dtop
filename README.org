@@ -54,22 +54,21 @@ Options:
   -h, print this help
 
   SERVER:
-    -s               use such server
+    -s               server service
     -p <port>        select a port
     -u <number>      select the number of max users in server
-    -4               use only ipv4
-    -6               use only ipv6
+    -4               use IPv4 only
+    -6               use IPv6 only
   Close server with ctrl+c
 
   CLIENT:
-    -c               use such client
+    -c               client service
     -o <filename>    redirect output in the given file
     -l               select loop mode (print in stdout)
-    -n <path of lib> select interactif mode
     -i <ip>          select the ip address of server
     -p <port>        select the port of server
-    -4               use only ipv4
-    -6               use only ipv6
+    -4               use IPv4 only
+    -6               use IPv6 only
   Close client with ctrl+c
 #+END_SRC
 
