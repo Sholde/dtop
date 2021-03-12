@@ -78,8 +78,14 @@ It allows user to create server and to connect on a server.
 **dtop** *-c -4 -i 10.0.2.15 -p 8080 -l*
 : Same example as above but run client while **ctrl+c** is not press (or **SIGINT**).
 
+# RETURN
+Return *0* on sucess. Else return another value (often *EXIT_FAILURE*).
+
 # AUTHORS
 Written by *Sholde* and *m4ssi*.
+
+# SOURCE
+Contribute in the project here: <https://github.com/aisetop/dtop>
 
 # BUGS
 Submit bug reports online at: <https://github.com/aisetop/dtop/issues>
