@@ -108,7 +108,7 @@ static void handle_loop(int sock)
 
       // display
       printf("\n");
-      printf("Refresh: %d\n", refresh_counter);
+      printf(BOLDRED "Refresh: %d\n" RESET, refresh_counter);
       
       for (int i = 0; i < msg_server.serv.max_users; i++)
         {

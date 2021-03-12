@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <proc/readproc.h>
+#include <sys/sysinfo.h>
 
 #define PROC_FLAGS (PROC_FILLMEM | PROC_FILLCOM | PROC_FILLENV | PROC_FILLUSR | \
                     PROC_FILLGRP | PROC_FILLSTAT | PROC_FILLSTATUS |            \
@@ -18,8 +19,10 @@ typedef struct machine_info_s
   size_t nproc;
   proc_t proc_info[MAX_PROCESS];
 
-  // Machine info
+  // Mem
   size_t mem_size;
+  
+  // Machine info
   char name[128];
 } machine_info_t;
 
