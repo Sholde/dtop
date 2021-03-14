@@ -105,15 +105,34 @@ static char *get_time(unsigned long long t)
 void regular_print ( arg_t * a)	{
 	// Resular Print
 
+  attron(A_BOLD);		
+  mvprintw( 0, 0, "Machine : ");
+  attroff(A_BOLD);
+  printw (  "%s\n", a->content->name);
 
+/*  
+  attron(A_BOLD);		
+  mvprintw( 1, 0, "%12s : ", "Processor");
+  attroff(A_BOLD);
+  printw( "%s", a->content->nproc);
+*/
+  attron(A_BOLD);
+  mvprintw( 1, 0, "Memory : ");
+  attroff(A_BOLD);
+  printw ( " %ld pages\n", a->content->mem_size);
+  attron(A_BOLD);
+  mvprintw( 2, 0, "Process : ");
+  attroff(A_BOLD);
+  printw ( " %ld\n", a->content->nprocess);
+  
   char *str_time = NULL;
 	mvprintw( 3, 0, "%5s" " %10s"  " %10s"  " %5s" " %5s"   " %6s" " %10s" " %10s"  " %9s"  " %s\n",
 	 "TID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
 
-	  for (int i = 0; &(a->content->proc_info[i]) != NULL && i < (a->content->nprocess - ( a->row + 5) ) && i < (a->row - 3); i++)
+	  for (int i = 0; &(a->content->proc_info[i]) != NULL && (i+4)  < (a->row - 1) && (a->deb+i)  < (a->content->nprocess)  && (a->deb + a->row - 7) < (a->content->nprocess); i++)
 		{
 		  // Transform time
-		  str_time = get_time(a->content->proc_info[i].utime);
+		  str_time = get_time(a->content->proc_info[i+a->deb].utime);
 
 		  mvprintw( i+4, 0, "%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n",
 				 a->content->proc_info[i+a->deb].tid,
@@ -145,13 +164,9 @@ void * n_display ( void * arg)	{
 	nodelay(stdscr, TRUE);		/* Reading from std don't lock*/
 
 	do	{
-//		clear();
-		mvprintw( 0, 0, "MTOP\n");
-		mvprintw( 1, 0, "Machine : %s\n", "m4ssi");
-
 		if( ch == ERR)	{
 			pthread_mutex_lock ( a->m);
-
+			
             regular_print( a);
 
 			pthread_cond_wait(a->c, a->m);
@@ -180,7 +195,7 @@ void * n_display ( void * arg)	{
 		}
 		else if ( ch == KEY_DOWN)	{
 			pthread_mutex_lock(a->m);
-			if ( a->deb < a->content->nprocess)	{
+			if ( (a->deb + a->row - 5) < a->content->nprocess -1 )	{
 				a->deb++;
 				regular_print( a);
 			}
@@ -190,7 +205,10 @@ void * n_display ( void * arg)	{
 //			handle_stop ( 0);
 			stop_client = 1;
 		}
-		mvprintw ( a->row-1, 0, "Lines : %d Columns : %d\n", a->row,a->col);
+        attron(A_BOLD);
+		mvprintw ( a->row-1, 0, "q : ");
+        attroff(A_BOLD);
+		mvprintw ( a->row-1, 4, " quit");
 		refresh();
 		ch = getch();
 	}while ( !stop_client);
