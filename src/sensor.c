@@ -81,6 +81,7 @@ machine_info_t *sensor(void)
 
   // Init structure
   machine_info_t *m = malloc(sizeof(machine_info_t));
+  m->nprocess = 0;
 
   while (info[count] != NULL)
     {
