@@ -181,6 +181,8 @@ void * n_display ( void * arg)	{
 			a->row = w.ws_row;
 			a->col = w.ws_col;
 			
+			clear();
+			refresh();
 			regular_print ( a);
 
 			pthread_mutex_unlock(a->m);
