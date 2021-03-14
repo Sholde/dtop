@@ -3,7 +3,7 @@
 CC=gcc
 CFLAGS=-g3 -Wall
 OFLAGS=-O2 -march=native
-LFLAGS=-lprocps -lpthread
+LFLAGS=-lprocps -lpthread -lncurses
 
 ## Name
 PROG=dtop
