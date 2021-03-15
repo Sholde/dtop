@@ -102,120 +102,123 @@ static char *get_time(unsigned long long t)
   return str_time;
 }
 
-void regular_print ( arg_t * a)	{
-	// Resular Print
+void regular_print ( arg_t * a)
+{
+  // Resular Print
 
-  attron(A_BOLD);		
-  mvprintw( 0, 0, "Machine : ");
+  attron(A_BOLD);               
+  mvprintw( 0, 0, "Machine:");
   attroff(A_BOLD);
-  printw (  "%s\n", a->content->name);
+  printw (  " %s\n", a->content->name);
 
-/*  
-  attron(A_BOLD);		
-  mvprintw( 1, 0, "%12s : ", "Processor");
+  attron(A_BOLD);               
+  mvprintw( 1, 0, "Processor:");
   attroff(A_BOLD);
-  printw( "%s", a->content->nproc);
-*/
+  printw( " %d", a->content->nproc);
+
   attron(A_BOLD);
-  mvprintw( 1, 0, "Memory : ");
+  mvprintw( 2, 0, "Memory:");
   attroff(A_BOLD);
   printw ( " %ld pages\n", a->content->mem_size);
+
   attron(A_BOLD);
-  mvprintw( 2, 0, "Process : ");
+  mvprintw( 3, 0, "Process:");
   attroff(A_BOLD);
   printw ( " %ld\n", a->content->nprocess);
   
   char *str_time = NULL;
-	mvprintw( 3, 0, "%5s" " %10s"  " %10s"  " %5s" " %5s"   " %6s" " %10s" " %10s"  " %9s"  " %s\n",
-	 "TID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
+  attron(A_BOLD);
+  mvprintw( 4, 0, "%5s" " %10s"  " %10s"  " %5s" " %5s"   " %6s" " %10s" " %10s"  " %9s"  " %s\n",
+            "TID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
+  attroff(A_BOLD);
 
-	  for (int i = 0; &(a->content->proc_info[i]) != NULL && (i+4)  < (a->row - 1) && (a->deb+i)  < (a->content->nprocess)  && (a->deb + a->row - 7) < (a->content->nprocess); i++)
-		{
-		  // Transform time
-		  str_time = get_time(a->content->proc_info[i+a->deb].utime);
+  for (int i = 0; &(a->content->proc_info[i]) != NULL && (i+5)  < (a->row - 1) && (a->deb+i)  < (a->content->nprocess)  && (a->deb + a->row - 7) < (a->content->nprocess); i++)
+    {
+      // Transform time
+      str_time = get_time(a->content->proc_info[i+a->deb].utime);
 
-		  mvprintw( i+4, 0, "%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n",
-				 a->content->proc_info[i+a->deb].tid,
-				 a->content->proc_info[i+a->deb].ruser,
-				 a->content->proc_info[i+a->deb].rgroup,
-				 a->content->proc_info[i+a->deb].ppid,
-				 a->content->proc_info[i+a->deb].processor,
-				 (double)a->content->proc_info[i+a->deb].pcpu / 100,
-				 a->content->proc_info[i+a->deb].rss,
-				 a->content->proc_info[i+a->deb].size,
-				 str_time,
-				 a->content->proc_info[i+a->deb].cmd);
+      mvprintw( i+5, 0, "%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n",
+                a->content->proc_info[i+a->deb].tid,
+                a->content->proc_info[i+a->deb].ruser,
+                a->content->proc_info[i+a->deb].rgroup,
+                a->content->proc_info[i+a->deb].ppid,
+                a->content->proc_info[i+a->deb].processor,
+                (double)a->content->proc_info[i+a->deb].pcpu / 100,
+                a->content->proc_info[i+a->deb].rss,
+                a->content->proc_info[i+a->deb].size,
+                str_time,
+                a->content->proc_info[i+a->deb].cmd);
 
-		  // Clean
-		  free(str_time);
-		}	
+      // Clean
+      free(str_time);
+    }       
 }
 
-void * n_display ( void * arg)	{
-	int ch = 0;
-	arg_t * a = (arg_t *) arg;
+void * n_display ( void * arg)  {
+  int ch = 0;
+  arg_t * a = (arg_t *) arg;
   // Compute info
   
-	initscr();					/* Start curses mode 		*/
-	raw();						/* Line buffering enabled	*/
-//	cbreak();					/* Line buffering disabled	*/
-	keypad(stdscr, TRUE);		/* We get F1, F2 etc..		*/
-	noecho();					/* Don't echo() while we do getch */
-	nodelay(stdscr, TRUE);		/* Reading from std don't lock*/
+  initscr();                                      /* Start curses mode            */
+  raw();                                          /* Line buffering enabled       */
+  //cbreak();                                     /* Line buffering disabled      */
+  keypad(stdscr, TRUE);                           /* We get F1, F2 etc..          */
+  noecho();                                       /* Don't echo() while we do getch */
+  nodelay(stdscr, TRUE);                          /* Reading from std don't lock*/
 
-	do	{
-		if( ch == ERR)	{
-			pthread_mutex_lock ( a->m);
-			
-            regular_print( a);
+  do      {
+    if( ch == ERR)  {
+      pthread_mutex_lock ( a->m);
+                        
+      regular_print( a);
 
-			pthread_cond_wait(a->c, a->m);
-			pthread_mutex_unlock ( a->m);
-			
-		}
-		else if(ch == KEY_RESIZE)	{
-			pthread_mutex_lock(a->m);
-			// Resize Window
-			struct winsize w;
-			ioctl(0, TIOCGWINSZ, &w);
-			a->row = w.ws_row;
-			a->col = w.ws_col;
-			
-			clear();
-			refresh();
-			regular_print ( a);
+      pthread_cond_wait(a->c, a->m);
+      pthread_mutex_unlock ( a->m);
+                        
+    }
+    else if(ch == KEY_RESIZE)       {
+      pthread_mutex_lock(a->m);
+      // Resize Window
+      struct winsize w;
+      ioctl(0, TIOCGWINSZ, &w);
+      a->row = w.ws_row;
+      a->col = w.ws_col;
+                        
+      clear();
+      refresh();
+      regular_print ( a);
 
-			pthread_mutex_unlock(a->m);
-		}
-		else if ( ch == KEY_UP)	{
-			pthread_mutex_lock(a->m);
-			if ( a->deb > 0)	{
-				a->deb--;
-				regular_print( a);
-			}
-			pthread_mutex_unlock(a->m);
-		}
-		else if ( ch == KEY_DOWN)	{
-			pthread_mutex_lock(a->m);
-			if ( (a->deb + a->row - 5) < a->content->nprocess -1 )	{
-				a->deb++;
-				regular_print( a);
-			}
-			pthread_mutex_unlock(a->m);
-		}
-		else if(ch == 'q' || ch == 'Q')	{
-//			handle_stop ( 0);
-			stop_client = 1;
-		}
-        attron(A_BOLD);
-		mvprintw ( a->row-1, 0, "q : ");
-        attroff(A_BOLD);
-		mvprintw ( a->row-1, 4, " quit");
-		refresh();
-		ch = getch();
-	}while ( !stop_client);
-	endwin();
-	return NULL;
+      pthread_mutex_unlock(a->m);
+    }
+    else if ( ch == KEY_UP || ch == 'k') {
+      pthread_mutex_lock(a->m);
+      if ( a->deb > 0)        {
+        a->deb--;
+      }
+      regular_print( a);
+      pthread_mutex_unlock(a->m);
+    }
+    else if ( ch == KEY_DOWN || ch == 'j') {
+      pthread_mutex_lock(a->m);
+      if ( (a->deb + a->row - 7) < a->content->nprocess)  {
+        a->deb++;
+      }
+      regular_print( a);
+      pthread_mutex_unlock(a->m);
+    }
+    else if(ch == 'q' || ch == 'Q') {
+      //handle_stop ( 0);
+      stop_client = 1;
+    }
+    attron(A_BOLD);
+    mvprintw ( a->row-1, 0, "q : ");
+    attroff(A_BOLD);
+    mvprintw ( a->row-1, 4, " quit");
+    refresh();
+    ch = getch();
+  } while ( !stop_client);
+  endwin();
+  return NULL;
 }
 
 static void handle_loop(int sock)
