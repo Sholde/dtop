@@ -207,14 +207,15 @@ void * n_display ( void * arg)  {
       pthread_mutex_unlock(a->m);
     }
     else if(ch == 'q' || ch == 'Q') {
-      //handle_stop ( 0);
       stop_client = 1;
     }
+    
     attron(A_BOLD);
-    mvprintw ( a->row-1, 0, "q : ");
+    mvprintw ( a->row-1, 0, "q:");
     attroff(A_BOLD);
-    mvprintw ( a->row-1, 4, " quit");
+    mvprintw ( a->row-1, 2, " quit");
     refresh();
+
     ch = getch();
   } while ( !stop_client);
   endwin();
