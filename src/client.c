@@ -110,22 +110,22 @@ void regular_print ( arg_t * a)
   attron(A_BOLD);               
   mvprintw( 0, 0, "Machine:");
   attroff(A_BOLD);
-  printw (  " %s\n", a->content[current_machine].machine_info.name);
+  printw(" %s\n", a->content[current_machine].machine_info.name);
 
   attron(A_BOLD);               
   mvprintw( 1, 0, "Processor:");
   attroff(A_BOLD);
-  printw( " %d", a->content[current_machine].machine_info.nproc);
+  printw(" %d", a->content[current_machine].machine_info.nproc);
 
   attron(A_BOLD);
   mvprintw( 2, 0, "Memory:");
   attroff(A_BOLD);
-  printw ( " %ld pages\n", a->content[current_machine].machine_info.mem_size);
+  printw(" %ld pages\n", a->content[current_machine].machine_info.mem_size);
 
   attron(A_BOLD);
   mvprintw( 3, 0, "Process:");
   attroff(A_BOLD);
-  printw ( " %ld\n", a->content[current_machine].machine_info.nprocess);
+  printw(" %ld\n", a->content[current_machine].machine_info.nprocess);
   
   char *str_time = NULL;
   attron(A_BOLD);
@@ -173,11 +173,11 @@ static void search_client(arg_t *a)
   exit(EXIT_FAILURE);
 }
 
-void * n_display ( void * arg)  {
+static void * n_display ( void * arg)  {
   int ch = 0;
   arg_t * a = (arg_t *) arg;
   // Compute info
-  
+
   initscr();                                      /* Start curses mode            */
   raw();                                          /* Line buffering enabled       */
   //cbreak();                                     /* Line buffering disabled      */
@@ -185,8 +185,8 @@ void * n_display ( void * arg)  {
   noecho();                                       /* Don't echo() while we do getch */
   nodelay(stdscr, TRUE);                          /* Reading from std don't lock*/
 
-  do      {
-    if( ch == ERR)  {
+  do {
+    if( ch == ERR) {
       pthread_mutex_lock ( a->m);
                         
       regular_print( a);
@@ -195,7 +195,7 @@ void * n_display ( void * arg)  {
       pthread_mutex_unlock ( a->m);
                         
     }
-    else if(ch == KEY_RESIZE)       {
+    else if(ch == KEY_RESIZE) {
       pthread_mutex_lock(a->m);
       // Resize Window
       struct winsize w;
@@ -243,15 +243,16 @@ void * n_display ( void * arg)  {
       pthread_mutex_unlock(a->m);
     }
     else if(ch == 'q' || ch == 'Q') {
-      //handle_stop ( 0);
       stop_client = 1;
     }
+
     attron(A_BOLD);
     mvprintw ( a->row-1, 0, "q : ");
     attroff(A_BOLD);
     mvprintw ( a->row-1, 4, " quit");
     refresh();
     ch = getch();
+    
   } while ( !stop_client);
   endwin();
   return NULL;
@@ -259,7 +260,6 @@ void * n_display ( void * arg)  {
 
 static void handle_loop(int sock)
 {
-  fprintf(stderr, "here\n");
   int refresh_counter = 0;
   machine_info_t *m = NULL;
   message_client_t msg_client;
@@ -309,7 +309,7 @@ static void handle_loop(int sock)
       // display
       pthread_mutex_lock(a.m);
 
-      memcpy ( a.content, msg_server.serv.client, sizeof(client_info_t) * MAX_CLIENT);
+      memcpy ( a.content, msg_server.serv.client, sizeof(msg_server.serv.client));
       pthread_mutex_unlock( a.m);
       pthread_cond_signal ( a.c);
 
@@ -325,12 +325,6 @@ static void handle_file(int sock, char *path)
   handle_standard(sock);
 
   close(fd);
-}
-
-static void handle_stop(int sig)
-{
-  printf("call\n");
-  stop_client = 1;
 }
 
 static void client_check_arg(int ipv, enum mode_client mode, char *path)
@@ -442,9 +436,6 @@ void client(int ipv, enum mode_client mode, char *ip, char *port, char *path)
       break;
       
     case LOOP:
-      // Handle stop
-      signal(SIGINT, handle_stop);
-
       handle_loop(sock);
       break;
       
