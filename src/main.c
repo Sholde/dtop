@@ -34,11 +34,12 @@ void print_help(int argc, char **argv)
   printf(BOLD "    -c              " RESET " client service\n");
   printf(BOLD "    -o <filename>   " RESET " redirect output in the given file\n");
   printf(BOLD "    -l              " RESET " select loop mode (print in stdout)\n");
+  printf(BOLD "    -n              " RESET " select ncurses mode\n");
   printf(BOLD "    -i <ip>         " RESET " select the ip address of server\n");
   printf(BOLD "    -p <port>       " RESET " select the port of server\n");
   printf(BOLD "    -4              " RESET " use IPv4 only\n");
   printf(BOLD "    -6              " RESET " use IPv6 only\n");
-  printf(BOLDRED "  Close client with ctrl+c\n" RESET);
+  printf(BOLDRED "  Close client with ctrl+c (for loop) and q (for ncurses)\n" RESET);
 }
 
 void handle_client(int argc, char **argv)
@@ -79,7 +80,7 @@ void handle_client(int argc, char **argv)
           mode = 1;
           break;
 
-        case 'n': /* intercatif */
+        case 'n': /* ncurses */
           mode = 3;
           break;
 
@@ -123,7 +124,7 @@ void handle_client(int argc, char **argv)
   // Select mode
   if (mode == 3)
     {
-      client(ipv, STANDARD, ip, port, path);
+      client(ipv, NCURSES, ip, port, path);
     }
   else if (mode == 2)
     {

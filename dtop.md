@@ -58,11 +58,19 @@ It allows user to create server and to connect on a server.
 **-p** *port*
 : connection to the server with the given *port*.
 
+### OUTPUT OPTIONS
+
 **-o** *file*
 : redirect output in the given *file*.
 
 **-l**
-: run loop instead of print oune execution like **ps**. Need a **ctrl+c** to stop (or **SIGINT**).
+: run loop, which display continusly on stdout instead of print one execution
+  without argument, like **ps**. Need a **ctrl+c** to stop (or **SIGINT**).
+
+**-n**
+: run ncurses mode. This option open a GUI in terminal. Currently, we can't
+  change the display machine but it will arrive soon. Need to press **q** to
+  quit.
 
 # EXAMPLES
 
