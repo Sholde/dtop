@@ -50,13 +50,22 @@ connection to the server with the given \f[I]ip\f[R].
 .TP
 \f[B]-p\f[R] \f[I]port\f[R]
 connection to the server with the given \f[I]port\f[R].
+.SS OUTPUT OPTIONS
 .TP
 \f[B]-o\f[R] \f[I]file\f[R]
 redirect output in the given \f[I]file\f[R].
 .TP
 \f[B]-l\f[R]
-run loop instead of print oune execution like \f[B]ps\f[R].
+run loop, which display continusly on stdout instead of print one
+execution without argument, like \f[B]ps\f[R].
 Need a \f[B]ctrl+c\f[R] to stop (or \f[B]SIGINT\f[R]).
+.TP
+\f[B]-n\f[R]
+run ncurses mode.
+This option open a GUI in terminal.
+Currently, we can\[cq]t change the display machine but it will arrive
+soon.
+Need to press \f[B]q\f[R] to quit.
 .SH EXAMPLES
 .TP
 \f[B]dtop -h\f[R]

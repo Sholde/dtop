@@ -10,6 +10,7 @@ PROG=dtop
 SRC_DIR=src
 OBJ_DIR=obj
 
+.PHONY: all prepare clean generate_man
 # Target
 all: prepare $(PROG)
 
@@ -40,6 +41,9 @@ $(OBJ_DIR)/io.o: $(SRC_DIR)/io.c $(SRC_DIR)/io.h
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(OFLAGS) -c $< -o $@ $(LFLAGS)
+
+generate_man: 
+	pandoc $(PROG).md -s -t man > $(PROG).1
 
 clean:
 	rm -Rf *~ *.o $(PROG) $(OBJ_DIR)
