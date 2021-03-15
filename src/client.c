@@ -151,7 +151,7 @@ void regular_print ( arg_t * a)
   attron(A_BOLD);               
   mvprintw( 0, 0, "Machine:");
   attroff(A_BOLD);
-  printw(" %s %d\n", a->content[current_machine].machine_info.name, current_machine);
+  printw(" %s\n", a->content[current_machine].machine_info.name);
 
   attron(A_BOLD);               
   mvprintw( 1, 0, "Processor:");
