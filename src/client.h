@@ -16,7 +16,7 @@ typedef struct
 {
   pthread_mutex_t * m;
   pthread_cond_t * c;
-  machine_info_t * content;
+  client_info_t content[MAX_CLIENT];
   int deb, row, col;
 } arg_t;
 
