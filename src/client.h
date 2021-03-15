@@ -9,7 +9,8 @@ enum mode_client
   {
     STANDARD,
     OUTPUT_FILE,
-    LOOP
+    LOOP,
+    NCURSES
   };
 
 typedef struct
