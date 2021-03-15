@@ -151,7 +151,7 @@ void regular_print ( arg_t * a)
   attron(A_BOLD);               
   mvprintw( 0, 0, "Machine:");
   attroff(A_BOLD);
-  printw(" %s\n", a->content[current_machine].machine_info.name);
+  printw(" %s %d\n", a->content[current_machine].machine_info.name, current_machine);
 
   attron(A_BOLD);               
   mvprintw( 1, 0, "Processor:");
@@ -198,6 +198,11 @@ void regular_print ( arg_t * a)
 
 static void search_client(arg_t *a)
 {
+  if (current_machine > MAX_CLIENT - 1)
+    {
+      current_machine = current_machine % MAX_CLIENT;
+    }
+  
   if (a->content[current_machine].active)
     return;
 
@@ -266,21 +271,16 @@ static void * n_display ( void * arg)  {
       regular_print( a);
       pthread_mutex_unlock(a->m);
     }
-    else if (ch == 'h') {
-      if (current_machine)
-        current_machine = current_machine - 1;
-
+    else if (ch == KEY_RIGHT || ch == 'l') {
       pthread_mutex_lock(a->m);
+
+
+        {
+          current_machine = current_machine + 1;
+        }
       search_client(a);
       regular_print(a);
-      pthread_mutex_unlock(a->m);
-    }
-    else if (ch == 'l') {
-      current_machine = (current_machine + 1) % MAX_CLIENT;
 
-      pthread_mutex_lock(a->m);
-      search_client(a);
-      regular_print(a);
       pthread_mutex_unlock(a->m);
     }
     else if(ch == 'q' || ch == 'Q') {
@@ -305,7 +305,7 @@ static void handle_ncurses(int sock)
   machine_info_t *m = NULL;
   message_client_t msg_client;
   message_server_t msg_server;
-  arg_t a;
+  arg_t *a = malloc(sizeof(arg_t));
   struct winsize w;
   ioctl(0, TIOCGWINSZ, &w);
 
@@ -313,13 +313,13 @@ static void handle_ncurses(int sock)
   pthread_mutex_t m_ncurses = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t c_ncurses = PTHREAD_COND_INITIALIZER;  
   
-  a.deb = 0;
-  a.row = w.ws_row;
-  a.col = w.ws_col;
-  a.m = &m_ncurses;
-  a.c = &c_ncurses;  
+  a->deb = 0;
+  a->row = w.ws_row;
+  a->col = w.ws_col;
+  a->m = &m_ncurses;
+  a->c = &c_ncurses;  
 
-  pthread_create ( &displayer, NULL, n_display, &a);
+  pthread_create ( &displayer, NULL, n_display, a);
 
     
   while (1)
@@ -341,18 +341,23 @@ static void handle_ncurses(int sock)
 
       if (ret == -1 || msg_server.deconnect)
         {
+          pthread_mutex_lock(a->m);
+          stop_client = 1;
+          pthread_mutex_unlock(a->m);
+                    
           pthread_join ( displayer, NULL);
           pthread_cond_destroy (&c_ncurses);
-          pthread_mutex_destroy (&m_ncurses);          
+          pthread_mutex_destroy (&m_ncurses);
+          free(a);
           break;
         }
 
       // display
-      pthread_mutex_lock(a.m);
+      pthread_mutex_lock(a->m);
 
-      memcpy ( a.content, msg_server.serv.client, sizeof(msg_server.serv.client));
-      pthread_mutex_unlock( a.m);
-      pthread_cond_signal ( a.c);
+      memcpy ( a->content, msg_server.serv.client, sizeof(msg_server.serv.client));
+      pthread_mutex_unlock( a->m);
+      pthread_cond_signal ( a->c);
 
     }
 }
@@ -383,7 +388,7 @@ static void client_check_arg(int ipv, enum mode_client mode, char *path)
     }
 
   // mode
-  if (mode != OUTPUT_FILE && mode != STANDARD && mode != LOOP)
+  if (mode != OUTPUT_FILE && mode != STANDARD && mode != LOOP && mode != NCURSES)
     {
       fprintf(stderr, "Error: bad mode\n");
       exit(EXIT_FAILURE);
@@ -482,6 +487,9 @@ void client(int ipv, enum mode_client mode, char *ip, char *port, char *path)
       break;
       
     case LOOP:
+      //
+      signal(SIGINT, handle_stop);
+      
       handle_loop(sock);
       break;
 
