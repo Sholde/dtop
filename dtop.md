@@ -71,6 +71,17 @@ It allows user to create server and to connect on a server.
 : run ncurses mode. This option open a GUI in terminal. Currently, we can't
   change the display machine but it will arrive soon. Need to press **q** to
   quit.
+  
+#### NCURSES MODE
+      
+*up arrow or j* 
+: up
+
+*down arrow or k* 
+: down
+
+*right arrow or l*
+: next machine
 
 # EXAMPLES
 

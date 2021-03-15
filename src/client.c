@@ -27,6 +27,7 @@
 #include "io.h"
 
 int stop_client = 0;
+int current_machine = 0;
 
 static void handle_standard(int sock)
 {
@@ -150,22 +151,22 @@ void regular_print ( arg_t * a)
   attron(A_BOLD);               
   mvprintw( 0, 0, "Machine:");
   attroff(A_BOLD);
-  printw (  " %s\n", a->content->name);
+  printw(" %s %d\n", a->content[current_machine].machine_info.name, current_machine);
 
   attron(A_BOLD);               
   mvprintw( 1, 0, "Processor:");
   attroff(A_BOLD);
-  printw( " %d", a->content->nproc);
+  printw(" %d", a->content[current_machine].machine_info.nproc);
 
   attron(A_BOLD);
   mvprintw( 2, 0, "Memory:");
   attroff(A_BOLD);
-  printw ( " %ld pages\n", a->content->mem_size);
+  printw(" %ld pages\n", a->content[current_machine].machine_info.mem_size);
 
   attron(A_BOLD);
   mvprintw( 3, 0, "Process:");
   attroff(A_BOLD);
-  printw ( " %ld\n", a->content->nprocess);
+  printw(" %ld\n", a->content[current_machine].machine_info.nprocess);
   
   char *str_time = NULL;
   attron(A_BOLD);
@@ -173,33 +174,56 @@ void regular_print ( arg_t * a)
             "TID", "USER", "GROUP", "PPID", "CPU", "CPU\%",  "RES", "VIRT", "TIME", "COMMAND");
   attroff(A_BOLD);
 
-  for (int i = 0; &(a->content->proc_info[i]) != NULL && (i+5)  < (a->row - 1) && (a->deb+i)  < (a->content->nprocess)  && (a->deb + a->row - 7) < (a->content->nprocess); i++)
+  for (int i = 0; &(a->content[current_machine].machine_info.proc_info[i]) != NULL && (i+5)  < (a->row - 1) && (a->deb+i)  < (a->content[current_machine].machine_info.nprocess)  && (a->deb + a->row - 7) < (a->content[current_machine].machine_info.nprocess); i++)
     {
       // Transform time
-      str_time = get_time(a->content->proc_info[i+a->deb].utime);
+      str_time = get_time(a->content[current_machine].machine_info.proc_info[i+a->deb].utime);
 
       mvprintw( i+5, 0, "%5d %10s %10s %5d %5d %6.2lf %10ld %10ld %9s %s\n",
-                a->content->proc_info[i+a->deb].tid,
-                a->content->proc_info[i+a->deb].ruser,
-                a->content->proc_info[i+a->deb].rgroup,
-                a->content->proc_info[i+a->deb].ppid,
-                a->content->proc_info[i+a->deb].processor,
-                (double)a->content->proc_info[i+a->deb].pcpu / 100,
-                a->content->proc_info[i+a->deb].rss,
-                a->content->proc_info[i+a->deb].size,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].tid,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].ruser,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].rgroup,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].ppid,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].processor,
+                (double)a->content[current_machine].machine_info.proc_info[i+a->deb].pcpu / 100,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].rss,
+                a->content[current_machine].machine_info.proc_info[i+a->deb].size,
                 str_time,
-                a->content->proc_info[i+a->deb].cmd);
+                a->content[current_machine].machine_info.proc_info[i+a->deb].cmd);
 
       // Clean
       free(str_time);
     }       
 }
 
-void * n_display ( void * arg)  {
+static void search_client(arg_t *a)
+{
+  if (current_machine > MAX_CLIENT - 1)
+    {
+      current_machine = current_machine % MAX_CLIENT;
+    }
+  
+  if (a->content[current_machine].active)
+    return;
+
+  for (int i = 0; i < MAX_CLIENT; i++)
+    {
+      int tmp = (current_machine + i) % MAX_CLIENT;
+      if (a->content[tmp].active)
+        {
+          current_machine = tmp;
+          return;
+        }
+    }
+
+  exit(EXIT_FAILURE);
+}
+
+static void * n_display ( void * arg)  {
   int ch = 0;
   arg_t * a = (arg_t *) arg;
   // Compute info
-  
+
   initscr();                                      /* Start curses mode            */
   raw();                                          /* Line buffering enabled       */
   //cbreak();                                     /* Line buffering disabled      */
@@ -207,8 +231,8 @@ void * n_display ( void * arg)  {
   noecho();                                       /* Don't echo() while we do getch */
   nodelay(stdscr, TRUE);                          /* Reading from std don't lock*/
 
-  do      {
-    if( ch == ERR)  {
+  do {
+    if( ch == ERR) {
       pthread_mutex_lock ( a->m);
                         
       regular_print( a);
@@ -217,7 +241,7 @@ void * n_display ( void * arg)  {
       pthread_mutex_unlock ( a->m);
                         
     }
-    else if(ch == KEY_RESIZE)       {
+    else if(ch == KEY_RESIZE) {
       pthread_mutex_lock(a->m);
       // Resize Window
       struct winsize w;
@@ -241,16 +265,27 @@ void * n_display ( void * arg)  {
     }
     else if ( ch == KEY_DOWN || ch == 'j') {
       pthread_mutex_lock(a->m);
-      if ( (a->deb + a->row - 7) < a->content->nprocess)  {
+      if ( (a->deb + a->row - 7) < a->content[current_machine].machine_info.nprocess)  {
         a->deb++;
       }
       regular_print( a);
       pthread_mutex_unlock(a->m);
     }
+    else if (ch == KEY_RIGHT || ch == 'l') {
+      pthread_mutex_lock(a->m);
+
+
+        {
+          current_machine = current_machine + 1;
+        }
+      search_client(a);
+      regular_print(a);
+
+      pthread_mutex_unlock(a->m);
+    }
     else if(ch == 'q' || ch == 'Q') {
       stop_client = 1;
     }
-    
     attron(A_BOLD);
     mvprintw ( a->row-1, 0, "q:");
     attroff(A_BOLD);
@@ -258,6 +293,7 @@ void * n_display ( void * arg)  {
     refresh();
 
     ch = getch();
+    
   } while ( !stop_client);
   endwin();
   return NULL;
@@ -269,24 +305,21 @@ static void handle_ncurses(int sock)
   machine_info_t *m = NULL;
   message_client_t msg_client;
   message_server_t msg_server;
-  arg_t a;
+  arg_t *a = malloc(sizeof(arg_t));
   struct winsize w;
+  ioctl(0, TIOCGWINSZ, &w);
+
   pthread_t displayer;
-  pthread_mutex_t m_ncurses;
-  pthread_cond_t c_ncurses;  
+  pthread_mutex_t m_ncurses = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t c_ncurses = PTHREAD_COND_INITIALIZER;  
   
-  ioctl ( 0, TIOCGWINSZ, &w);
-  pthread_mutex_init ( &m_ncurses, NULL);
-  pthread_cond_init (&c_ncurses, NULL);
+  a->deb = 0;
+  a->row = w.ws_row;
+  a->col = w.ws_col;
+  a->m = &m_ncurses;
+  a->c = &c_ncurses;  
 
-  a.deb = 0;
-  a.row = w.ws_row;
-  a.col = w.ws_col;
-  a.m = &m_ncurses;
-  a.c = &c_ncurses;  
-  a.content = (machine_info_t *) malloc ( sizeof (machine_info_t));
-
-  pthread_create ( &displayer, NULL, n_display, &a);
+  pthread_create ( &displayer, NULL, n_display, a);
 
     
   while (1)
@@ -308,21 +341,23 @@ static void handle_ncurses(int sock)
 
       if (ret == -1 || msg_server.deconnect)
         {
+          pthread_mutex_lock(a->m);
+          stop_client = 1;
+          pthread_mutex_unlock(a->m);
+                    
           pthread_join ( displayer, NULL);
           pthread_cond_destroy (&c_ncurses);
-          pthread_mutex_destroy (&m_ncurses);          
+          pthread_mutex_destroy (&m_ncurses);
+          free(a);
           break;
         }
 
       // display
-      pthread_mutex_lock(a.m);
-      for (int i = 0; i < msg_server.serv.max_users; i++)
-        {
-          if (msg_server.serv.client[i].active)
-            memcpy ( a.content, &(msg_server.serv.client[i].machine_info), sizeof(machine_info_t));
-        }
-      pthread_mutex_unlock( a.m);
-      pthread_cond_signal ( a.c);
+      pthread_mutex_lock(a->m);
+
+      memcpy ( a->content, msg_server.serv.client, sizeof(msg_server.serv.client));
+      pthread_mutex_unlock( a->m);
+      pthread_cond_signal ( a->c);
 
     }
 }
@@ -353,7 +388,7 @@ static void client_check_arg(int ipv, enum mode_client mode, char *path)
     }
 
   // mode
-  if (mode != OUTPUT_FILE && mode != STANDARD && mode != LOOP)
+  if (mode != OUTPUT_FILE && mode != STANDARD && mode != LOOP && mode != NCURSES)
     {
       fprintf(stderr, "Error: bad mode\n");
       exit(EXIT_FAILURE);
@@ -452,9 +487,9 @@ void client(int ipv, enum mode_client mode, char *ip, char *port, char *path)
       break;
       
     case LOOP:
-      // Handle stop
+      //
       signal(SIGINT, handle_stop);
-
+      
       handle_loop(sock);
       break;
 
@@ -477,5 +512,4 @@ void client(int ipv, enum mode_client mode, char *ip, char *port, char *path)
 
   close(sock);
 }
-
 
