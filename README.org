@@ -13,11 +13,12 @@ $ git clone https://github.com/aisetop/dtop.git
   - gcc (glibc)
   - make (Makefile)
   - procps (readproc)
+  - ncusres (ncurses)
 
 *** Example of installation on Archlinux
 
 #+BEGIN_SRC bash
-$ sudo pacman -Syu gcc make procps
+$ sudo pacman -Syu gcc make procps ncurses
 #+END_SRC
 
 * Compilation
