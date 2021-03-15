@@ -65,11 +65,12 @@ Options:
     -c               client service
     -o <filename>    redirect output in the given file
     -l               select loop mode (print in stdout)
+    -n               select ncurses mode
     -i <ip>          select the ip address of server
     -p <port>        select the port of server
     -4               use IPv4 only
     -6               use IPv6 only
-  Close client with ctrl+c
+  Close client with ctrl+c (for loop) and q (for ncurses)
 #+END_SRC
 
 * List of fonctionnality
@@ -92,7 +93,7 @@ Options:
    | B3   | CLI               | getopt, help and man                       | YES         |
    | B4   | Plugin            | display plugin                             | NO          |
    | B5   | Interactif        | filtered (come with ncurses support maybe) | NO          |
-   | B6   | GUI               | ncurses mode                               | NO          |
+   | B6   | GUI               | ncurses mode                               | YES         |
    | B7   | Compatibility I/O | json output                                | NO          |
 
 * License
